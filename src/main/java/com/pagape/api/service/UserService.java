@@ -21,5 +21,5 @@ public class UserService {
         return userRepository.save(usuario);
     }
 
-    // En el futuro aquí podrías añadir: buscarPorId, actualizarFoto, etc.
+    // En el futuro aquí podemos añadir: buscarPorId, actualizarFoto, etc.
 }
