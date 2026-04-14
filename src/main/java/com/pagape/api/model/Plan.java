@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 public class Plan {
 
-    private int id;
+    private Integer id;
     private int idGrupo;
     private int idCreador;
     private String titulo;
@@ -24,7 +24,7 @@ public class Plan {
         this.fechaCreacion = LocalDate.now();
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
@@ -56,7 +56,7 @@ public class Plan {
         return denegado;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

@@ -2,22 +2,38 @@ package com.pagape.api.model;
 
 import java.util.ArrayList;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
+@Table(name = "usuarios")
 public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
+
+    @Column(length = 50)
     private String nombre;
+
+    @Column(length = 100, unique = true, nullable = false)
     private String email;
-    private ArrayList<Grupo> grupos;
+
+    @Transient
+    private ArrayList<Grupo> grupos; //Hace falta terminar hibernate de esta parte
+
+    @Column(name = "numero_tokens", columnDefinition = "INT DEFAULT 0")
     private int numTokens;
+
+    @Column(name = "url_foto_perfil", length = 255)
     private String urlFotoPerfil;
+
+    @Column(name = "contraseña_hash", length = 255)
     private String contraseñaHash;
 
     public Usuario() {
@@ -31,7 +47,7 @@ public class Usuario {
         this.contraseñaHash = contraseñaHash;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
@@ -59,7 +75,7 @@ public class Usuario {
         return contraseñaHash;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

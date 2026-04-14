@@ -2,7 +2,7 @@ package com.pagape.api.model;
 
 public class Liquidacion {
 
-    private int id;
+    private Integer id;
     private int idPagador;
     private int idReceptor;
     private int idGrupo;
@@ -27,7 +27,7 @@ public class Liquidacion {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

@@ -2,7 +2,7 @@ package com.pagape.api.model;
 
 public class Gasto {
 
-    private int id;
+    private Integer id;
     private int idPagador;
     private int idPlanOrigen;
     private float importe;
@@ -12,7 +12,7 @@ public class Gasto {
     public Gasto() {
     }
 
-    public Gasto(int idPagador, int idPlanOrigen, float importe, String concepto, String urlFotoTicket) {
+    public Gasto(Integer idPagador, int idPlanOrigen, float importe, String concepto, String urlFotoTicket) {
         this.idPagador = idPagador;
         this.idPlanOrigen = idPlanOrigen;
         this.importe = importe;
@@ -20,11 +20,11 @@ public class Gasto {
         this.urlFotoTicket = urlFotoTicket;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

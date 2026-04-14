@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class Grupo {
 
-    private int id;
+    private Integer id;
     private String nombre;
     private String codigoUnico;
     private String claveAcceso;
@@ -27,7 +27,7 @@ public class Grupo {
         this.planes = new ArrayList<>();
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
@@ -63,7 +63,7 @@ public class Grupo {
         return urlFotoGrupo;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
