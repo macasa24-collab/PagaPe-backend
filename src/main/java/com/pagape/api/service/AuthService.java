@@ -1,15 +1,20 @@
 package com.pagape.api.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.pagape.api.dto.request.RegisterRequest;
 import com.pagape.api.model.Usuario;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
     @Autowired
     private UserService userService; // AuthService usa a UserService para tocar la DB
+
+    @Autowired
+    private PasswordEncoder passwordEncoder; // Para encriptar las contraseñas
 
     public Usuario registrar(RegisterRequest request) throws Exception {
         
@@ -23,9 +28,10 @@ public class AuthService {
         nuevoUsuario.setNombre(request.getNombre()); // Asegúrate de que en el DTO sea getNombre o getUsername
         nuevoUsuario.setEmail(request.getEmail());
         
-        // 3. Seguridad: Aquí es donde irá el hash de BCrypt en la Historia 4.
-        // De momento, guardamos la pass tal cual para que puedas probar el flujo.
-        nuevoUsuario.setContraseñaHash(request.getPassword()); 
+        // 3. SEGURIDAD: Encriptamos la contraseña antes de guardarla
+        // En lugar de: nuevoUsuario.setContraseñaHash(request.getPassword());
+        String passwordEncriptada = passwordEncoder.encode(request.getPassword());
+        nuevoUsuario.setContraseñaHash(passwordEncriptada);
 
         // 4. Delegamos el guardado real al UserService
         return userService.guardarUsuario(nuevoUsuario);
