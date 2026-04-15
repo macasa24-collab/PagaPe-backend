@@ -1,12 +1,7 @@
 package com.pagape.api;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-
-import com.pagape.api.model.Usuario;
-import com.pagape.api.repository.UserRepository;
 
 @SpringBootApplication
 public class PagapeApplication {
@@ -15,14 +10,14 @@ public class PagapeApplication {
         SpringApplication.run(PagapeApplication.class, args);
     }
 
-    @Bean
+    /*@Bean
     public CommandLineRunner testHibernate(UserRepository userRepository) {
         return args -> {
             System.out.println("--- PROBANDO HIBERNATE ---");
 
             try {
                 // 1. Creamos el objeto
-                Usuario user = new Usuario("Gemini Test", "test@pagape.com", "foto_perfil.png", "hash_seguro_123");
+                Usuario user = new Usuario("Daniel Test 15-04", "sadsada@pagape.com", "hash_seguro_123");
 
                 // 2. Guardamos (Aquí Hibernate genera el INSERT)
                 userRepository.save(user);
@@ -36,5 +31,5 @@ public class PagapeApplication {
 
             System.out.println("--------------------------");
         };
-    }
+    }^*/
 }

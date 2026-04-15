@@ -39,11 +39,11 @@ public class Usuario {
     public Usuario() {
     }
 
-    public Usuario(String nombre, String email, String urlFotoPerfil, String contraseñaHash) {
+    public Usuario(String nombre, String email, String contraseñaHash) {
         this.nombre = nombre;
         this.email = email;
         this.grupos = new ArrayList<>();
-        this.urlFotoPerfil = urlFotoPerfil;
+        this.urlFotoPerfil = null;
         this.contraseñaHash = contraseñaHash;
     }
 
