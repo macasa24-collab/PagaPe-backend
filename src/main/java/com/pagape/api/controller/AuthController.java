@@ -1,5 +1,8 @@
 package com.pagape.api.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +20,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/auth") // Todas las rutas de esta clase empezarán por /auth
 public class AuthController {
+
     @Autowired
     private AuthService authService;
 
@@ -40,15 +44,25 @@ public class AuthController {
         }
     }
 
-    // --- ENDPOINT DE LOGIN ---
+    /**
+     * ENDPOINT DE LOGIN Verifica las credenciales y, si son correctas, entrega
+     * la "llave" (JWT) para que el usuario pueda acceder a rutas protegidas.
+     */
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        try {
+            // Llamamos a la lógica de login que genera el token
+            String token = authService.login(request);
 
-        // Aquí en el futuro comprobaremos la contraseña y generaremos el JWT
-        // String token = authService.login(request);
+            Map<String, String> response = new HashMap<>();
+            response.put("token", token);
 
-        System.out.println("Recibida petición de login para: " + request.getEmail());
+            return ResponseEntity.ok(response);
 
-        return ResponseEntity.ok("Login simulado con éxito para: " + request.getEmail());
+        } catch (Exception e) {
+            // Si el login falla (usuario no existe o pass incorrecta)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Error de autenticación: " + e.getMessage());
+        }
     }
 }
