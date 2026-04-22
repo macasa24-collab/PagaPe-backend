@@ -1,17 +1,24 @@
 package com.pagape.api.model;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "usuarios")
+@Data
+@NoArgsConstructor
 public class Usuario {
 
     @Id
@@ -24,9 +31,6 @@ public class Usuario {
     @Column(length = 100, unique = true, nullable = false)
     private String email;
 
-    @Transient
-    private ArrayList<Grupo> grupos; //Hace falta terminar hibernate de esta parte
-
     @Column(name = "numero_tokens", columnDefinition = "INT DEFAULT 0")
     private int numTokens;
 
@@ -36,70 +40,14 @@ public class Usuario {
     @Column(name = "contraseña_hash", length = 255)
     private String contraseñaHash;
 
-    public Usuario() {
-    }
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude // Importante para evitar bucles infinitos con Lombok
+    private List<PerfilUsuarioGrupo> perfiles = new ArrayList<>();
 
     public Usuario(String nombre, String email, String contraseñaHash) {
         this.nombre = nombre;
         this.email = email;
-        this.grupos = new ArrayList<>();
         this.urlFotoPerfil = null;
-        this.contraseñaHash = contraseñaHash;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public ArrayList<Grupo> getGrupos() {
-        return grupos;
-    }
-
-    public int getNumTokens() {
-        return numTokens;
-    }
-
-    public String getUrlFotoPerfil() {
-        return urlFotoPerfil;
-    }
-
-    public String getContraseñaHash() {
-        return contraseñaHash;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setGrupos(ArrayList<Grupo> grupos) {
-        this.grupos = grupos;
-    }
-
-    public void setNumTokens(int numTokens) {
-        this.numTokens = numTokens;
-    }
-
-    public void setUrlFotoPerfil(String urlFotoPerfil) {
-        this.urlFotoPerfil = urlFotoPerfil;
-    }
-
-    public void setContraseñaHash(String contraseñaHash) {
         this.contraseñaHash = contraseñaHash;
     }
 

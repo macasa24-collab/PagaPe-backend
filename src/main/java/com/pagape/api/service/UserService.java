@@ -33,6 +33,13 @@ public class UserService {
      * Guarda el objeto Usuario en MySQL.
      */
     public Usuario guardarUsuario(Usuario usuario) {
+        // 1. Verificamos si el email ya está registrado usando tu método existente
+        if (existePorEmail(usuario.getEmail())) {
+            // Aquí podrías lanzar una excepción personalizada, de momento lanzamos una genérica
+            throw new RuntimeException("Error: El correo " + usuario.getEmail() + " ya está registrado.");
+        }
+
+        // 2. Si no existe, procedemos a guardar
         return userRepository.save(usuario);
     }
 

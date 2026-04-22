@@ -1,68 +1,54 @@
 package com.pagape.api.model;
 
+import java.math.BigDecimal;
+
+import com.pagape.api.model.auxiliar_id.PerfilUsuarioGrupoId;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "usuario_grupo")
+@Data
+@NoArgsConstructor
 public class PerfilUsuarioGrupo {
 
-    private int idGrupo;
-    private int idUsuario;
+    @EmbeddedId
+    private PerfilUsuarioGrupoId id;
+
+    @ManyToOne
+    @MapsId("idUsuario") // Conecta con el campo de la llave compuesta
+    @JoinColumn(name = "id_usuario")
+    private Usuario usuario;
+
+    @ManyToOne
+    @MapsId("idGrupo") // Conecta con el campo de la llave compuesta
+    @JoinColumn(name = "id_grupo")
+    private Grupo grupo;
+
+    @Column(name = "puntuacion_karma")
     private int puntosKarma;
+
+    @Column(name = "contador_planes_propuestos")
     private int contPlanesPropuestos;
+
+    @Column(name = "es_admin")
     private boolean esAdmin;
-    private float balanceActual;
 
-    public PerfilUsuarioGrupo() {
-    }
+    @Column(name = "balance_actual")
+    private BigDecimal balanceActual;
 
-    public PerfilUsuarioGrupo(int idGrupo, int idUsuario) {
-        this.idGrupo = idGrupo;
-        this.idUsuario = idUsuario;
-    }
-
-    public int getIdGrupo() {
-        return idGrupo;
-    }
-
-    public int getIdUsuario() {
-        return idUsuario;
-    }
-
-    public int getPuntosKarma() {
-        return puntosKarma;
-    }
-
-    public int getContPlanesPropuestos() {
-        return contPlanesPropuestos;
-    }
-
-    public boolean isEsAdmin() {
-        return esAdmin;
-    }
-
-    public float getBalanceActual() {
-        return balanceActual;
-    }
-
-    public void setIdGrupo(int idGrupo) {
-        this.idGrupo = idGrupo;
-    }
-
-    public void setIdUsuario(int idUsuario) {
-        this.idUsuario = idUsuario;
-    }
-
-    public void setPuntosKarma(int puntosKarma) {
-        this.puntosKarma = puntosKarma;
-    }
-
-    public void setContPlanesPropuestos(int contPlanesPropuestos) {
-        this.contPlanesPropuestos = contPlanesPropuestos;
-    }
-
-    public void setEsAdmin(boolean esAdmin) {
-        this.esAdmin = esAdmin;
-    }
-
-    public void setBalanceActual(float balanceActual) {
-        this.balanceActual = balanceActual;
+    public PerfilUsuarioGrupo(Usuario usuario, Grupo grupo) {
+        this.id = new PerfilUsuarioGrupoId(usuario.getId(), grupo.getId());
+        this.usuario = usuario;
+        this.grupo = grupo;
     }
 
 }
