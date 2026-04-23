@@ -12,6 +12,7 @@ public class GrupoResponse {
     private Integer id;
     private String nombre;
     private String codigo;
+    private String claveAcceso;
     private boolean esPremium;
     private boolean esAdmin;
     private BigDecimal balanceActual;

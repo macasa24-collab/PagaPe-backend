@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,8 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pagape.api.dto.request.GrupoRequest;
 import com.pagape.api.dto.request.JoinGrupoRequest;
 import com.pagape.api.dto.response.GrupoResponse;
+import com.pagape.api.dto.response.MiembroResponse;
 import com.pagape.api.model.Grupo;
 import com.pagape.api.model.Usuario;
+import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
 import com.pagape.api.service.GrupoService;
 import com.pagape.api.service.PerfilUsuarioGrupoService;
 import com.pagape.api.service.UserService;
@@ -35,6 +38,9 @@ public class GrupoController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PerfilUsuarioGrupoRepository perfilRepository;
 
     @PostMapping("/create")
     public ResponseEntity<?> crearGrupo(@RequestBody GrupoRequest request, Authentication authentication) {
@@ -65,6 +71,7 @@ public class GrupoController {
                     nuevoGrupo.getId(),
                     nuevoGrupo.getNombre(),
                     nuevoGrupo.getCodigoUnico(),
+                    nuevoGrupo.getClaveAcceso(),
                     nuevoGrupo.isEsPremium(),
                     true, // esAdmin (siempre true para el creador)
                     BigDecimal.ZERO, // balanceActual
@@ -137,6 +144,32 @@ public class GrupoController {
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("mensaje", "No se pudo unir al grupo"));
+        }
+    }
+
+    @GetMapping("/{grupoId}/members")
+    public ResponseEntity<?> obtenerMiembros(@PathVariable Integer grupoId, Authentication authentication) {
+        try {
+            // 1. Obtener quién está preguntando (desde el Token)
+            String email = authentication.getName();
+            Usuario usuario = userService.obtenerPorEmail(email);
+
+            // 2. SEGURIDAD: Verificar si el usuario pertenece al grupo
+            // Usamos el repository para ver si existe la fila en la tabla intermedia
+            boolean esMiembro = perfilRepository.existsByIdIdUsuarioAndIdIdGrupo(usuario.getId(), grupoId);
+
+            if (!esMiembro) {
+                // Si no pertenece, le damos un 403 Forbidden (Prohibido)
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("mensaje", "No tienes permiso para ver los miembros de este grupo"));
+            }
+
+            // 3. Si pasó la validación, devolvemos la lista
+            List<MiembroResponse> miembros = perfilService.listarMiembrosGrupo(grupoId);
+            return ResponseEntity.ok(miembros);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "Error al validar acceso"));
         }
     }
 }

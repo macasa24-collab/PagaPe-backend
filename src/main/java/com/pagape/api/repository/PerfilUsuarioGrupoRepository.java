@@ -14,15 +14,21 @@ import com.pagape.api.model.auxiliar_id.PerfilUsuarioGrupoId;
 @Repository
 public interface PerfilUsuarioGrupoRepository extends JpaRepository<PerfilUsuarioGrupo, PerfilUsuarioGrupoId> {
 
-    // Aquí podrías añadir búsquedas personalizadas si las necesitas luego
+    // --- Búsquedas por ID Compuesto o @Query ---
     @Query("SELECT p FROM PerfilUsuarioGrupo p WHERE p.id = :pk")
     Optional<PerfilUsuarioGrupo> findByLlaveCompuesta(@Param("pk") PerfilUsuarioGrupoId pk);
 
-    // Buscar por los componentes de la PK (accediendo a los campos dentro del ID)
     @Query("SELECT p FROM PerfilUsuarioGrupo p WHERE p.id.idUsuario = :userId AND p.id.idGrupo = :grupoId")
     Optional<PerfilUsuarioGrupo> findByIdsDirectos(@Param("userId") Integer userId, @Param("grupoId") Integer grupoId);
 
+    // --- Métodos de Verificación (SEGURIDAD) ---
+    // Usando la navegación de Spring Data sobre tu PK compuesta
+    boolean existsByIdIdUsuarioAndIdIdGrupo(Integer idUsuario, Integer idGrupo);
+
+    // --- Consultas de Listado y Conteo ---
     long countByIdIdGrupo(Integer idGrupo);
 
     List<PerfilUsuarioGrupo> findByUsuarioId(Integer idUsuario);
+
+    List<PerfilUsuarioGrupo> findByGrupoId(Integer grupoId);
 }

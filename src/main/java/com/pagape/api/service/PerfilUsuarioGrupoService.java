@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.pagape.api.dto.response.GrupoResponse;
+import com.pagape.api.dto.response.MiembroResponse;
 import com.pagape.api.model.Grupo;
 import com.pagape.api.model.PerfilUsuarioGrupo;
 import com.pagape.api.model.Usuario;
@@ -86,11 +87,26 @@ public class PerfilUsuarioGrupoService {
                 perfil.getGrupo().getId(),
                 perfil.getGrupo().getNombre(),
                 perfil.getGrupo().getCodigoUnico(),
+                perfil.getGrupo().getClaveAcceso(),
                 perfil.getGrupo().isEsPremium(),
                 perfil.isEsAdmin(),
                 perfil.getBalanceActual(),
                 perfil.getPuntosKarma(),
                 perfil.getContPlanesPropuestos()
+        )).collect(Collectors.toList());
+    }
+
+    public List<MiembroResponse> listarMiembrosGrupo(Integer grupoId) {
+        // 1. Buscamos todas las relaciones de ese grupo
+        List<PerfilUsuarioGrupo> perfiles = perfilRepository.findByGrupoId(grupoId);
+
+        // 2. Mapeamos a nuestro DTO de miembros
+        return perfiles.stream().map(perfil -> new MiembroResponse(
+                perfil.getUsuario().getId(),
+                perfil.getUsuario().getNombre(),
+                perfil.getUsuario().getEmail(),
+                perfil.isEsAdmin(),
+                perfil.getBalanceActual()
         )).collect(Collectors.toList());
     }
 }
