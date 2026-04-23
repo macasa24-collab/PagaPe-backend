@@ -1,5 +1,6 @@
 package com.pagape.api.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,4 +23,6 @@ public interface PerfilUsuarioGrupoRepository extends JpaRepository<PerfilUsuari
     Optional<PerfilUsuarioGrupo> findByIdsDirectos(@Param("userId") Integer userId, @Param("grupoId") Integer grupoId);
 
     long countByIdIdGrupo(Integer idGrupo);
+
+    List<PerfilUsuarioGrupo> findByUsuarioId(Integer idUsuario);
 }

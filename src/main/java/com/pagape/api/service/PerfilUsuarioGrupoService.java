@@ -1,11 +1,14 @@
 package com.pagape.api.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.pagape.api.dto.response.GrupoResponse;
 import com.pagape.api.model.Grupo;
 import com.pagape.api.model.PerfilUsuarioGrupo;
 import com.pagape.api.model.Usuario;
@@ -69,5 +72,25 @@ public class PerfilUsuarioGrupoService {
         perfilRepository.save(nuevoPerfil);
 
         return "Éxito: Te has unido a '" + grupo.getNombre() + "' como " + (nuevoPerfil.isEsAdmin() ? "ADMIN" : "MIEMBRO");
+
+    }
+
+    public List<GrupoResponse> listarMisGrupos(Integer usuarioId) {
+        // 1. Buscamos todas las relaciones del usuario con sus grupos
+        List<PerfilUsuarioGrupo> perfiles = perfilRepository.findByUsuarioId(usuarioId);
+
+        System.out.println("DEBUG: Grupos encontrados para el usuario " + usuarioId + ": " + perfiles.size());
+
+        // 2. Transformamos la lista de Entidades a lista de DTOs (GrupoResponse)
+        return perfiles.stream().map(perfil -> new GrupoResponse(
+                perfil.getGrupo().getId(),
+                perfil.getGrupo().getNombre(),
+                perfil.getGrupo().getCodigoUnico(),
+                perfil.isEsAdmin(),
+                perfil.getBalanceActual(),
+                perfil.getPuntosKarma(),
+                perfil.getContPlanesPropuestos()
+
+        )).collect(Collectors.toList());
     }
 }

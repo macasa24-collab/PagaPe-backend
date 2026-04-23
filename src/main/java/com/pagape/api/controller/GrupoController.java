@@ -1,16 +1,26 @@
 package com.pagape.api.controller;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pagape.api.dto.request.GrupoRequest;
+import com.pagape.api.dto.response.GrupoResponse;
 import com.pagape.api.model.Grupo;
+import com.pagape.api.model.Usuario;
 import com.pagape.api.service.GrupoService;
 import com.pagape.api.service.PerfilUsuarioGrupoService;
+import com.pagape.api.service.UserService;
 
 @RestController
 @RequestMapping("/groups")
@@ -22,25 +32,83 @@ public class GrupoController {
     @Autowired
     private PerfilUsuarioGrupoService perfilService;
 
+    @Autowired
+    private UserService userService;
+
     @PostMapping("/create")
-    public ResponseEntity<?> crearGrupo(@RequestBody GrupoRequest request) {
+    public ResponseEntity<?> crearGrupo(@RequestBody GrupoRequest request, Authentication authentication) {
         try {
-            // 1. Llamamos al servicio para crear el grupo (genera código y guarda en DB)
+            // 1. Extraemos el email del usuario desde el Token JWT
+            // authentication.getName() devuelve el "subject" del token (tu email)
+            String emailUsuario = authentication.getName();
+
+            // 2. Buscamos el objeto Usuario completo para obtener su ID real
+            Usuario creador = userService.obtenerPorEmail(emailUsuario);
+
+            if (creador == null) {
+                return ResponseEntity.status(404).body("Error: Usuario autenticado no encontrado en DB.");
+            }
+
+            // 3. Creamos el grupo (nombre y clave vienen del JSON)
             Grupo nuevoGrupo = grupoService.crearGrupo(request.getNombre(), request.getClave());
 
-            // 2. Unimos al creador automáticamente usando el método que ya tienes
-            // Como el grupo está recién creado (vacío), tu lógica lo hará ADMIN automáticamente
-            String resultadoUnion = perfilService.unirseAGrupo(
-                    request.getCreadorId(),
+            // 4. Unimos al creador usando el ID que recuperamos de forma segura
+            perfilService.unirseAGrupo(
+                    creador.getId(),
                     nuevoGrupo.getCodigoUnico(),
                     request.getClave()
             );
 
-            // 3. Respondemos con el grupo creado (que ya incluye su código único)
-            return ResponseEntity.ok(nuevoGrupo);
+            // 5. Devolvemos el grupo creado
+            GrupoResponse respuesta = new GrupoResponse(
+            nuevoGrupo.getId(),
+            nuevoGrupo.getNombre(),
+            nuevoGrupo.getCodigoUnico(),
+            true,               // esAdmin (siempre true para el creador)
+            BigDecimal.ZERO,    // balanceActual
+            0,                  // puntosKarma
+            0            // contPlanesPropuestos
+        );
+
+        return ResponseEntity.ok(respuesta); // Devolvemos el DTO limpio
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al crear grupo: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/my-groups")
+    public ResponseEntity<?> obtenerMisGrupos(Authentication authentication) {
+        try {
+            // 1. Extraemos el email del Token JWT
+            String email = authentication.getName();
+
+            // 2. Buscamos el usuario por email para tener su ID
+            Usuario usuario = userService.obtenerPorEmail(email);
+
+            if (usuario == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("mensaje", "Usuario no encontrado"));
+            }
+
+            // 3. Llamamos al servicio que ahora devuelve List<GrupoResponse>
+            List<GrupoResponse> misGrupos = perfilService.listarMisGrupos(usuario.getId());
+
+            // 4. Si la lista está vacía, puedes devolver un 200 con lista vacía o un mensaje
+            if (misGrupos.isEmpty()) {
+                return ResponseEntity.ok(Map.of(
+                        "mensaje", "Aún no te has unido a ningún grupo",
+                        "grupos", misGrupos
+                ));
+            }
+
+            // 5. Devolvemos la lista de DTOs directamente
+            return ResponseEntity.ok(misGrupos);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("mensaje", "Error al obtener tus grupos",
+                            "detalle", e.getMessage()));
         }
     }
 }

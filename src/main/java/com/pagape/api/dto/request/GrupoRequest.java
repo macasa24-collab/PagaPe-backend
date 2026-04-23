@@ -12,5 +12,4 @@ public class GrupoRequest {
     @NotBlank(message = "La clave del grupo es obligatoria")
     private String clave;
 
-    private Integer creadorId; // El ID del usuario que le da a "Crear Grupo"
 }
