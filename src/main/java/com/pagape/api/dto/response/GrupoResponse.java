@@ -8,9 +8,11 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class GrupoResponse {
+
     private Integer id;
     private String nombre;
     private String codigo;
+    private boolean esPremium;
     private boolean esAdmin;
     private BigDecimal balanceActual;
     private Integer puntosKarma;

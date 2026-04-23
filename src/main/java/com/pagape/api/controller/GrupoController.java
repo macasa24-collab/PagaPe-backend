@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pagape.api.dto.request.GrupoRequest;
+import com.pagape.api.dto.request.JoinGrupoRequest;
 import com.pagape.api.dto.response.GrupoResponse;
 import com.pagape.api.model.Grupo;
 import com.pagape.api.model.Usuario;
@@ -61,16 +62,17 @@ public class GrupoController {
 
             // 5. Devolvemos el grupo creado
             GrupoResponse respuesta = new GrupoResponse(
-            nuevoGrupo.getId(),
-            nuevoGrupo.getNombre(),
-            nuevoGrupo.getCodigoUnico(),
-            true,               // esAdmin (siempre true para el creador)
-            BigDecimal.ZERO,    // balanceActual
-            0,                  // puntosKarma
-            0            // contPlanesPropuestos
-        );
+                    nuevoGrupo.getId(),
+                    nuevoGrupo.getNombre(),
+                    nuevoGrupo.getCodigoUnico(),
+                    nuevoGrupo.isEsPremium(),
+                    true, // esAdmin (siempre true para el creador)
+                    BigDecimal.ZERO, // balanceActual
+                    0, // puntosKarma
+                    0 // contPlanesPropuestos
+            );
 
-        return ResponseEntity.ok(respuesta); // Devolvemos el DTO limpio
+            return ResponseEntity.ok(respuesta); // Devolvemos el DTO limpio
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al crear grupo: " + e.getMessage());
@@ -109,6 +111,32 @@ public class GrupoController {
             return ResponseEntity.badRequest()
                     .body(Map.of("mensaje", "Error al obtener tus grupos",
                             "detalle", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<?> unirseAGrupo(@RequestBody JoinGrupoRequest request, Authentication authentication) {
+        try {
+            // 1. Obtener el usuario autenticado
+            String email = authentication.getName();
+            Usuario usuario = userService.obtenerPorEmail(email);
+
+            // 2. Llamar al servicio que ya tienes programado
+            String resultado = perfilService.unirseAGrupo(
+                    usuario.getId(),
+                    request.getCodigoUnico(),
+                    request.getClave()
+            );
+
+            // 3. Manejar la respuesta según lo que devuelve tu Service
+            if (resultado.startsWith("Error")) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", resultado));
+            }
+
+            return ResponseEntity.ok(Map.of("mensaje", resultado));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "No se pudo unir al grupo"));
         }
     }
 }

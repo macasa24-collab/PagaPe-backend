@@ -86,11 +86,11 @@ public class PerfilUsuarioGrupoService {
                 perfil.getGrupo().getId(),
                 perfil.getGrupo().getNombre(),
                 perfil.getGrupo().getCodigoUnico(),
+                perfil.getGrupo().isEsPremium(),
                 perfil.isEsAdmin(),
                 perfil.getBalanceActual(),
                 perfil.getPuntosKarma(),
                 perfil.getContPlanesPropuestos()
-
         )).collect(Collectors.toList());
     }
 }
