@@ -1,91 +1,61 @@
 package com.pagape.api.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "planes")
+@Data
+@NoArgsConstructor
 public class Plan {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private int idGrupo;
-    private int idCreador;
+
+    @ManyToOne
+    @JoinColumn(name = "id_grupo", nullable = false)
+    private Grupo grupo;
+
+    @ManyToOne
+    @JoinColumn(name = "id_creador", nullable = false)
+    private Usuario creador;
+
+    @Column(length = 100)
     private String titulo;
+
+    @Column(length = 200)
     private String descripcion;
+
+    @Column(name = "votacion_cerrada")
     private boolean votacionCerrada;
+
+    @Column(name = "fecha_creacion")
     private LocalDate fechaCreacion;
+
+    @Column(name = "plan_denegado")
     private boolean denegado;
 
-    public Plan() {
-    }
+    @Column(name = "fecha_propuesta")
+    private LocalDateTime fechaPropuesta;
 
-    public Plan(int idGrupo, int idCreador, String titulo, String descripcion) {
-        this.idGrupo = idGrupo;
-        this.idCreador = idCreador;
+    public Plan(Grupo grupo, Usuario creador, String titulo, String descripcion, LocalDateTime fechaPropuesta) {
+        this.grupo = grupo;
+        this.creador = creador;
         this.titulo = titulo;
         this.descripcion = descripcion;
+        this.fechaPropuesta = fechaPropuesta;
         this.fechaCreacion = LocalDate.now();
     }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public int getIdGrupo() {
-        return idGrupo;
-    }
-
-    public int getIdCreador() {
-        return idCreador;
-    }
-
-    public String getTitulo() {
-        return titulo;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public boolean isVotacionCerrada() {
-        return votacionCerrada;
-    }
-
-    public LocalDate getFechaCreacion() {
-        return fechaCreacion;
-    }
-
-    public boolean isDenegado() {
-        return denegado;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public void setIdGrupo(int idGrupo) {
-        this.idGrupo = idGrupo;
-    }
-
-    public void setIdCreador(int idCreador) {
-        this.idCreador = idCreador;
-    }
-
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public void setVotacionCerrada(boolean votacionCerrada) {
-        this.votacionCerrada = votacionCerrada;
-    }
-
-    public void setFechaCreacion(LocalDate fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-
-    public void setDenegado(boolean denegado) {
-        this.denegado = denegado;
-    }
-
 }
