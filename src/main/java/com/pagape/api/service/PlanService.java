@@ -2,10 +2,12 @@ package com.pagape.api.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.pagape.api.dto.response.PlanResponse;
 import com.pagape.api.model.Grupo;
 import com.pagape.api.model.Plan;
 import com.pagape.api.model.Usuario;
@@ -13,6 +15,7 @@ import com.pagape.api.repository.GrupoRepository;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
 import com.pagape.api.repository.PlanRepository;
 import com.pagape.api.repository.UserRepository;
+import com.pagape.api.repository.VotoPlanRepository;
 
 @Service
 public class PlanService {
@@ -28,6 +31,9 @@ public class PlanService {
 
     @Autowired
     private PerfilUsuarioGrupoRepository perfilRepository;
+
+    @Autowired
+    private VotoPlanRepository votoPlanRepository;
 
     public Plan crearNuevoPlan(Integer idGrupo, Integer idCreador, String titulo, String descripcion, LocalDateTime fechaPropuesta) {
 
@@ -60,5 +66,28 @@ public class PlanService {
 
     public List<Plan> obtenerPlanesPorGrupo(Integer idGrupo) {
         return planRepository.findByGrupoId(idGrupo);
+    }
+
+    public List<PlanResponse> listarPlanesConVotos(Integer idGrupo) {
+        List<Plan> planes = planRepository.findByGrupoId(idGrupo);
+
+        return planes.stream().map(plan -> {
+            // 1. Contar votos
+            long aFavor = votoPlanRepository.countByIdIdPlanAndVoto(plan.getId(), "A favor");
+            long enContra = votoPlanRepository.countByIdIdPlanAndVoto(plan.getId(), "En contra");
+
+            // 2. Mapear manualmente a PlanResponse
+            return PlanResponse.builder()
+                    .idPlan(plan.getId())
+                    .titulo(plan.getTitulo())
+                    .descripcion(plan.getDescripcion())
+                    .fechaPropuesta(plan.getFechaPropuesta())
+                    .votacionCerrada(plan.isVotacionCerrada())
+                    .nombreCreador(plan.getCreador().getNombre())
+                    .urlFotoCreador(plan.getCreador().getUrlFotoPerfil())
+                    .votosAFavor(aFavor)
+                    .votosEnContra(enContra)
+                    .build();
+        }).collect(Collectors.toList());
     }
 }

@@ -1,6 +1,7 @@
 package com.pagape.api.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,12 +9,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pagape.api.dto.request.PlanRequest;
+import com.pagape.api.dto.response.PlanResponse;
 import com.pagape.api.model.Plan;
 import com.pagape.api.model.Usuario;
 import com.pagape.api.service.PlanService;
@@ -70,5 +74,16 @@ public class PlanController {
             // Error genérico por si algo falla en el servidor
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno del servidor");
         }
+    }
+
+    @GetMapping("/group/{idGrupo}")
+    public ResponseEntity<List<PlanResponse>> obtenerPlanesPorGrupo(@PathVariable Integer idGrupo) {
+        List<PlanResponse> resumen = planService.listarPlanesConVotos(idGrupo);
+
+        if (resumen.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(resumen);
     }
 }

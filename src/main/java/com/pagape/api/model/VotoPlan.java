@@ -1,41 +1,49 @@
 package com.pagape.api.model;
 
+import com.pagape.api.model.auxiliar_id.VotoPlanId;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+@Entity
+@Table(name = "voto_plan")
+@Data
+@NoArgsConstructor
 public class VotoPlan {
 
-    private int idPlan;
-    private int idUsuario;
+    @EmbeddedId
+    private VotoPlanId id;
+
+    // Mapeamos el Enum para que coincida con 'A favor' / 'En contra'
+    @Column(name = "voto", nullable = false)
     private String voto;
 
-    public VotoPlan() {
-    }
+    // Relación con Plan
+    @ManyToOne
+    @MapsId("idPlan") // Esto le dice a JPA que use el campo idPlan de VotoPlanId
+    @JoinColumn(name = "id_plan")
+    @ToString.Exclude // Evita recursión infinita en toString
+    private Plan plan;
 
-    public VotoPlan(int idPlan, int idUsuario, String voto) {
-        this.idPlan = idPlan;
-        this.idUsuario = idUsuario;
-        this.voto = voto;
-    }
+    @ManyToOne
+    @MapsId("idUsuario") // Esto le dice a JPA que use el campo idUsuario de VotoPlanId
+    @JoinColumn(name = "id_usuario")
+    @ToString.Exclude // Evita recursión infinita en toString
+    private Usuario usuario;
 
-    public int getIdPlan() {
-        return idPlan;
-    }
-
-    public void setIdPlan(int idPlan) {
-        this.idPlan = idPlan;
-    }
-
-    public int getIdUsuario() {
-        return idUsuario;
-    }
-
-    public void setIdUsuario(int idUsuario) {
-        this.idUsuario = idUsuario;
-    }
-
-    public String getVoto() {
-        return voto;
-    }
-
-    public void setVoto(String voto) {
-        this.voto = voto;
+    // Constructor para facilitar la creación de votos
+    public VotoPlan(Plan plan, Usuario usuario, String tipoVoto) {
+        this.id = new VotoPlanId(plan.getId(), usuario.getId());
+        this.plan = plan;
+        this.usuario = usuario;
+        this.voto = tipoVoto;
     }
 }
