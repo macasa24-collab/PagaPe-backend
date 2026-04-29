@@ -4,12 +4,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pagape.api.dto.request.VotoPlanRequest;
+import com.pagape.api.dto.response.VotoEstadoResponse;
 import com.pagape.api.service.VotoPlanService;
 
 @RestController
@@ -19,9 +22,8 @@ public class VotoPlanController {
     @Autowired
     private VotoPlanService votoPlanService;
 
-     /*Endpoint para registrar o actualizar un voto en un plan.
+    /*Endpoint para registrar o actualizar un voto en un plan.
      El usuario se extrae de forma segura a través del token JWT (Authentication). */
-     
     @PostMapping("/vote")
     public ResponseEntity<?> votar(@RequestBody VotoPlanRequest request, Authentication authentication) {
         try {
@@ -41,6 +43,17 @@ public class VotoPlanController {
             // Manejo de errores inesperados
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error interno al procesar el voto: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/status/{idPlan}")
+    public ResponseEntity<?> checkEstadoVoto(@PathVariable Integer idPlan, Authentication authentication) {
+        try {
+            String emailUsuario = authentication.getName();
+            VotoEstadoResponse estado = votoPlanService.verificarVotoUsuario(idPlan, emailUsuario);
+            return ResponseEntity.ok(estado);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }
