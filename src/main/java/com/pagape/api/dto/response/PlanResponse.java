@@ -18,6 +18,7 @@ public class PlanResponse {
     private String descripcion;
     private LocalDateTime fechaPropuesta;
     private boolean votacionCerrada;
+    private boolean denegado;
 
     // Datos del creador simplificados
     private String nombreCreador;

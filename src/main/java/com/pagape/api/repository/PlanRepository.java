@@ -12,4 +12,6 @@ public interface PlanRepository extends JpaRepository<Plan, Integer> {
 
     // Puedes probar buscar todos los planes de un grupo específico
     List<Plan> findByGrupoId(Integer idGrupo);
+
+    List<Plan> findByGrupoIdAndVotacionCerradaFalse(Integer idGrupo);
 }

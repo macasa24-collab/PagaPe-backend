@@ -30,6 +30,9 @@ public class PerfilUsuarioGrupoService {
     @Autowired
     private GrupoRepository grupoRepository;
 
+    @Autowired
+    private VotoPlanService votoPlanService;
+
     public PerfilUsuarioGrupo guardarPerfil(PerfilUsuarioGrupo perfil) {
         return perfilRepository.save(perfil);
     }
@@ -81,6 +84,11 @@ public class PerfilUsuarioGrupoService {
         List<PerfilUsuarioGrupo> perfiles = perfilRepository.findByUsuarioId(usuarioId);
 
         System.out.println("DEBUG: Grupos encontrados para el usuario " + usuarioId + ": " + perfiles.size());
+
+        // 2. NUEVO: Limpiamos planes expirados para cada grupo antes de devolver la respuesta
+        for (PerfilUsuarioGrupo perfil : perfiles) {
+            votoPlanService.evaluarCierrePlanPorFecha(perfil.getGrupo().getId());
+        }
 
         // 2. Transformamos la lista de Entidades a lista de DTOs (GrupoResponse)
         return perfiles.stream().map(perfil -> new GrupoResponse(

@@ -83,6 +83,7 @@ public class PlanService {
                     .descripcion(plan.getDescripcion())
                     .fechaPropuesta(plan.getFechaPropuesta())
                     .votacionCerrada(plan.isVotacionCerrada())
+                    .denegado(plan.isDenegado())
                     .nombreCreador(plan.getCreador().getNombre())
                     .urlFotoCreador(plan.getCreador().getUrlFotoPerfil())
                     .votosAFavor(aFavor)

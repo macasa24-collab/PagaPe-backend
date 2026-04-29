@@ -1,6 +1,7 @@
 package com.pagape.api.service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -133,5 +134,41 @@ public class VotoPlanService {
         return votoPlanRepository.findById(idId)
                 .map(voto -> new VotoEstadoResponse(true, voto.getVoto()))
                 .orElse(new VotoEstadoResponse(false, null));
+    }
+
+    @Transactional
+    public void evaluarCierrePlanPorFecha(Integer idGrupo) {
+        // 1. Buscamos solo los planes abiertos de ese grupo
+        List<Plan> planesAbiertos = planRepository.findByGrupoIdAndVotacionCerradaFalse(idGrupo);
+
+        LocalDate hoy = LocalDate.now();
+
+        for (Plan plan : planesAbiertos) {
+            LocalDate fechaDelPlan = plan.getFechaPropuesta().toLocalDate();
+
+            // 2. Aplicamos tu lógica solo si es el mismo día (o incluso si ya pasó el día)
+            if (hoy.isEqual(fechaDelPlan) || hoy.isAfter(fechaDelPlan)) {
+
+                long totalMiembros = perfilRepository.countByIdIdGrupo(plan.getGrupo().getId());
+                long totalVotosEmitidos = votoPlanRepository.countById_IdPlan(plan.getId());
+                long votosNo = votoPlanRepository.countByIdIdPlanAndVoto(plan.getId(), "En contra");
+
+                boolean esDenegado = false;
+                double porcentajeParticipacion = (double) totalVotosEmitidos / totalMiembros;
+
+                if (porcentajeParticipacion <= 0.50) {
+                    esDenegado = true;
+                } else {
+                    if (votosNo >= (totalVotosEmitidos / 2.0)) {
+                        esDenegado = true;
+                    }
+                }
+
+                // 3. Cerramos el plan
+                plan.setVotacionCerrada(true);
+                plan.setDenegado(esDenegado);
+                planRepository.save(plan);
+            }
+        }
     }
 }
