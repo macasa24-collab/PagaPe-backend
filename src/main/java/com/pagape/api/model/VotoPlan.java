@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name = "voto_plan")
+@Table(name = "votos_planes")
 @Data
 @NoArgsConstructor
 public class VotoPlan {

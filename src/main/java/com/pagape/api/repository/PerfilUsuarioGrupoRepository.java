@@ -8,7 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.pagape.api.model.Grupo;
 import com.pagape.api.model.PerfilUsuarioGrupo;
+import com.pagape.api.model.Usuario;
 import com.pagape.api.model.auxiliar_id.PerfilUsuarioGrupoId;
 
 @Repository
@@ -31,4 +33,6 @@ public interface PerfilUsuarioGrupoRepository extends JpaRepository<PerfilUsuari
     List<PerfilUsuarioGrupo> findByUsuarioId(Integer idUsuario);
 
     List<PerfilUsuarioGrupo> findByGrupoId(Integer grupoId);
+
+    public boolean existsByUsuarioAndGrupo(Usuario usuario, Grupo grupo);
 }
