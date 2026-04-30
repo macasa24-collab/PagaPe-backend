@@ -1,70 +1,55 @@
 package com.pagape.api.model;
 
+import java.math.BigDecimal;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "gastos")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Gasto {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private int idPagador;
-    private int idPlanOrigen;
-    private float importe;
+
+    // Vinculamos id_pagador con la entidad Usuario
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_pagador", nullable = false)
+    private Usuario pagador;
+
+    // Vinculamos id_plan_origen con la entidad Plan
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_plan_origen", nullable = false)
+    private Plan planOrigen;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal importe;
+
+    @Column(length = 300)
     private String concepto;
+
+    @Column(name = "url_foto_ticket", length = 255)
     private String urlFotoTicket;
 
-    public Gasto() {
-    }
-
-    public Gasto(Integer idPagador, int idPlanOrigen, float importe, String concepto, String urlFotoTicket) {
-        this.idPagador = idPagador;
-        this.idPlanOrigen = idPlanOrigen;
+    public Gasto(Usuario pagador, Plan planOrigen, BigDecimal importe, String concepto, String urlFotoTicket) {
+        this.pagador = pagador;
+        this.planOrigen = planOrigen;
         this.importe = importe;
         this.concepto = concepto;
-        this.urlFotoTicket = urlFotoTicket;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public int getIdPagador() {
-        return idPagador;
-    }
-
-    public void setIdPagador(int idPagador) {
-        this.idPagador = idPagador;
-    }
-
-    public int getIdPlanOrigen() {
-        return idPlanOrigen;
-    }
-
-    public void setIdPlanOrigen(int idPlanOrigen) {
-        this.idPlanOrigen = idPlanOrigen;
-    }
-
-    public float getImporte() {
-        return importe;
-    }
-
-    public void setImporte(float importe) {
-        this.importe = importe;
-    }
-
-    public String getConcepto() {
-        return concepto;
-    }
-
-    public void setConcepto(String concepto) {
-        this.concepto = concepto;
-    }
-
-    public String getUrlFotoTicket() {
-        return urlFotoTicket;
-    }
-
-    public void setUrlFotoTicket(String urlFotoTicket) {
         this.urlFotoTicket = urlFotoTicket;
     }
 

@@ -1,12 +1,15 @@
 package com.pagape.api.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.pagape.api.dto.response.PlanActualResponse;
 import com.pagape.api.dto.response.PlanResponse;
 import com.pagape.api.model.Grupo;
 import com.pagape.api.model.Plan;
@@ -90,5 +93,28 @@ public class PlanService {
                     .votosEnContra(enContra)
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    public PlanActualResponse obtenerPlanActual(Integer idGrupo) {
+        LocalDateTime ahora = LocalDateTime.now(); // Hora exacta del sistema
+        LocalDateTime finDia = LocalDate.now().atTime(LocalTime.MAX); // 23:59:59
+
+        // La lista solo traerá planes que NO hayan pasado todavía
+        List<Plan> planesRestantes = planRepository.findProximosPlanesAceptadosDelDia(idGrupo, ahora, finDia);
+
+        if (planesRestantes.isEmpty()) {
+            return PlanActualResponse.builder().tienePlanHoy(false).build();
+        }
+
+        // Al estar ordenados por fecha ASC, el get(0) SIEMPRE será el más cercano al futuro
+        Plan proximoPlan = planesRestantes.get(0);
+
+        return PlanActualResponse.builder()
+                .tienePlanHoy(true)
+                .idPlan(proximoPlan.getId())
+                .titulo(proximoPlan.getTitulo())
+                .descripcion(proximoPlan.getDescripcion())
+                .fecha(proximoPlan.getFechaPropuesta())
+                .build();
     }
 }

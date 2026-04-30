@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pagape.api.dto.request.PlanRequest;
+import com.pagape.api.dto.response.PlanActualResponse;
 import com.pagape.api.dto.response.PlanResponse;
 import com.pagape.api.model.Plan;
 import com.pagape.api.model.Usuario;
@@ -85,5 +86,10 @@ public class PlanController {
         }
 
         return ResponseEntity.ok(resumen);
+    }
+
+    @GetMapping("/group/{idGrupo}/current-plan")
+    public ResponseEntity<PlanActualResponse> getPlanActual(@PathVariable Integer idGrupo) {
+        return ResponseEntity.ok(planService.obtenerPlanActual(idGrupo));
     }
 }
