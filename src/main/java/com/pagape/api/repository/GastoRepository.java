@@ -16,4 +16,6 @@ public interface GastoRepository extends JpaRepository<Gasto, Integer> {
 
     // Opcional: Para saber cuánto ha pagado un usuario en total en la app
     List<Gasto> findByPagadorId(Integer idUsuario);
+
+    List<Gasto> findByPlanOrigen_Grupo_IdAndPlanOrigen_VotacionCerradaTrueAndPlanOrigen_DenegadoFalse(Integer idGrupo);
 }

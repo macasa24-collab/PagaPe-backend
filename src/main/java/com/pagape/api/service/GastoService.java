@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -87,5 +88,13 @@ public class GastoService {
         }
 
         return gasto;
+    }
+
+    public List<Gasto> listarGastosConfirmadosPorGrupo(Integer idGrupo) {
+        // Buscamos gastos donde:
+        // 1. El ID del grupo coincida.
+        // 2. La votación del plan esté cerrada (voto finalizado).
+        // 3. El plan NO haya sido denegado.
+        return gastoRepository.findByPlanOrigen_Grupo_IdAndPlanOrigen_VotacionCerradaTrueAndPlanOrigen_DenegadoFalse(idGrupo);
     }
 }

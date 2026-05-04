@@ -35,4 +35,6 @@ public interface PerfilUsuarioGrupoRepository extends JpaRepository<PerfilUsuari
     List<PerfilUsuarioGrupo> findByGrupoId(Integer grupoId);
 
     public boolean existsByUsuarioAndGrupo(Usuario usuario, Grupo grupo);
+
+    boolean existsById_IdUsuario_EmailAndId_IdGrupo(String email, Integer idGrupo);
 }
