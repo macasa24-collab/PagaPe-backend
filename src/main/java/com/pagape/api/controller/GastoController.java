@@ -90,6 +90,7 @@ public class GastoController {
             );
             GastoResponse gastoResponse = new GastoResponse(
                     nuevoGasto.getId(),
+                    idPlan,
                     pagadorResponse,
                     nuevoGasto.getImporte(),
                     nuevoGasto.getConcepto(),
@@ -134,6 +135,7 @@ public class GastoController {
                 );
                 return new GastoResponse(
                         gasto.getId(),
+                        gasto.getPlanOrigen().getId(),
                         pagadorResponse,
                         gasto.getImporte(),
                         gasto.getConcepto(),
