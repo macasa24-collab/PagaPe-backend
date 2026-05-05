@@ -107,9 +107,9 @@ public class GastoController {
                     .filter(u -> !u.getId().equals(pagador.getId()))
                     .collect(Collectors.toList());
 
-            int numDeudores = deudores.size();
-            if (numDeudores > 0) {
-                BigDecimal cuota = importe.divide(BigDecimal.valueOf(numDeudores), 2, RoundingMode.HALF_UP);
+            int totalMiembros = miembros.size();
+            if (totalMiembros > 0) {
+                BigDecimal cuota = importe.divide(BigDecimal.valueOf(totalMiembros), 2, RoundingMode.HALF_UP);
                 for (Usuario deudor : deudores) {
                     RepartoDeuda reparto = new RepartoDeuda(nuevoGasto.getId(), deudor.getId(), cuota);
                     repartoDeudaRepository.save(reparto);
