@@ -1,6 +1,7 @@
 package com.pagape.api.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,4 +28,7 @@ public class PlanResponse {
     // Contadores
     private long votosAFavor;
     private long votosEnContra;
+
+    // Votos específicos por usuario
+    private List<VotoResponse> votos;
 }

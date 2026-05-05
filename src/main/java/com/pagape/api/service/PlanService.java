@@ -11,9 +11,11 @@ import org.springframework.stereotype.Service;
 
 import com.pagape.api.dto.response.PlanActualResponse;
 import com.pagape.api.dto.response.PlanResponse;
+import com.pagape.api.dto.response.VotoResponse;
 import com.pagape.api.model.Grupo;
 import com.pagape.api.model.Plan;
 import com.pagape.api.model.Usuario;
+import com.pagape.api.model.VotoPlan;
 import com.pagape.api.repository.GrupoRepository;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
 import com.pagape.api.repository.PlanRepository;
@@ -79,7 +81,16 @@ public class PlanService {
             long aFavor = votoPlanRepository.countByIdIdPlanAndVoto(plan.getId(), "A favor");
             long enContra = votoPlanRepository.countByIdIdPlanAndVoto(plan.getId(), "En contra");
 
-            // 2. Mapear manualmente a PlanResponse
+            // 2. Obtener votos detallados por usuario
+            List<VotoPlan> votosPlan = votoPlanRepository.findByIdIdPlan(plan.getId());
+            List<VotoResponse> votos = votosPlan.stream().map(voto -> VotoResponse.builder()
+                    .idUsuario(voto.getUsuario().getId())
+                    .nombreUsuario(voto.getUsuario().getNombre())
+                    .voto(voto.getVoto())
+                    .build())
+                    .collect(Collectors.toList());
+
+            // 3. Mapear manualmente a PlanResponse
             return PlanResponse.builder()
                     .idPlan(plan.getId())
                     .titulo(plan.getTitulo())
@@ -91,6 +102,7 @@ public class PlanService {
                     .urlFotoCreador(plan.getCreador().getUrlFotoPerfil())
                     .votosAFavor(aFavor)
                     .votosEnContra(enContra)
+                    .votos(votos)
                     .build();
         }).collect(Collectors.toList());
     }
