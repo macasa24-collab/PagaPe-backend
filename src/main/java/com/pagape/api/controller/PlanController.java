@@ -77,6 +77,21 @@ public class PlanController {
         }
     }
 
+    @GetMapping("/user/all-plans")
+public ResponseEntity<List<PlanResponse>> obtenerMisPlanes(Authentication authentication) {
+    // 1. Obtener el email del token JWT
+    String email = authentication.getName();
+    
+    // 2. Buscar al usuario
+    Usuario usuario = usuarioService.obtenerPorEmail(email);
+    
+    // 3. Llamar al servicio para obtener planes de todos sus grupos
+    // Debes crear este método en tu PlanService
+    List<PlanResponse> planes = planService.listarPlanesPorUsuario(usuario.getId());
+    
+    return ResponseEntity.ok(planes);
+}
+
     @GetMapping("/group/{idGrupo}")
     public ResponseEntity<List<PlanResponse>> obtenerPlanesPorGrupo(@PathVariable Integer idGrupo) {
         List<PlanResponse> resumen = planService.listarPlanesConVotos(idGrupo);
