@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GastoResponse {
     private Integer id;
+    private Integer idPlan;
     private UsuarioResponse pagador;
     private BigDecimal importe;
     private String concepto;
