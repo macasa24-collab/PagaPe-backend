@@ -18,18 +18,24 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.pagape.api.dto.request.RepartoDeudaRequest;
 import com.pagape.api.dto.response.GastoResponse;
+import com.pagape.api.dto.response.RepartoDeudaResponse;
 import com.pagape.api.dto.response.UsuarioResponse;
 import com.pagape.api.model.Gasto;
+import com.pagape.api.model.RepartoDeuda;
 import com.pagape.api.model.Usuario;
 import com.pagape.api.repository.GastoRepository;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
+import com.pagape.api.repository.RepartoDeudaRepository;
 import com.pagape.api.service.GastoService;
+import com.pagape.api.service.RepartoDeudaService;
 import com.pagape.api.service.UserService;
 
 @RestController
@@ -52,6 +58,12 @@ public class GastoController {
     @Autowired
     private PerfilUsuarioGrupoRepository perfilRepository;
 
+    @Autowired
+    private RepartoDeudaService repartoDeudaService;
+
+    @Autowired
+    private RepartoDeudaRepository repartoDeudaRepository;
+
     @PostMapping("/{idPlan}/new") // Ajusta la ruta a /plans/{idPlan}/expense si quieres ser fiel al Flutter
     public ResponseEntity<?> registrarGasto(
             @PathVariable Integer idPlan,
@@ -72,16 +84,16 @@ public class GastoController {
 
             // Mapeamos a DTO para evitar bucles JSON
             UsuarioResponse pagadorResponse = new UsuarioResponse(
-                pagador.getId(),
-                pagador.getNombre(),
-                pagador.getEmail()
+                    pagador.getId(),
+                    pagador.getNombre(),
+                    pagador.getEmail()
             );
             GastoResponse gastoResponse = new GastoResponse(
-                nuevoGasto.getId(),
-                pagadorResponse,
-                nuevoGasto.getImporte(),
-                nuevoGasto.getConcepto(),
-                nuevoGasto.getUrlFotoTicket()
+                    nuevoGasto.getId(),
+                    pagadorResponse,
+                    nuevoGasto.getImporte(),
+                    nuevoGasto.getConcepto(),
+                    nuevoGasto.getUrlFotoTicket()
             );
 
             // Devolvemos el DTO
@@ -116,16 +128,16 @@ public class GastoController {
             // Mapeamos a DTOs
             List<GastoResponse> gastosResponse = gastos.stream().map(gasto -> {
                 UsuarioResponse pagadorResponse = new UsuarioResponse(
-                    gasto.getPagador().getId(),
-                    gasto.getPagador().getNombre(),
-                    gasto.getPagador().getEmail()
+                        gasto.getPagador().getId(),
+                        gasto.getPagador().getNombre(),
+                        gasto.getPagador().getEmail()
                 );
                 return new GastoResponse(
-                    gasto.getId(),
-                    pagadorResponse,
-                    gasto.getImporte(),
-                    gasto.getConcepto(),
-                    gasto.getUrlFotoTicket()
+                        gasto.getId(),
+                        pagadorResponse,
+                        gasto.getImporte(),
+                        gasto.getConcepto(),
+                        gasto.getUrlFotoTicket()
                 );
             }).collect(Collectors.toList());
 
@@ -172,4 +184,49 @@ public class GastoController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    /**
+     * Endpoint para asignar deudas personalizadas a un gasto
+     */
+    @PostMapping("/{idGasto}/custom-debts")
+    public ResponseEntity<?> asignarDeudasPersonalizadas(
+            @PathVariable Integer idGasto,
+            @RequestBody List<RepartoDeudaRequest> deudasRequest,
+            Authentication authentication) {
+        try {
+            String email = authentication.getName();
+
+            // Verificar que el gasto existe
+            Gasto gasto = gastoRepository.findById(idGasto)
+                    .orElseThrow(() -> new RuntimeException("Gasto no encontrado"));
+
+            // Verificar que el usuario es miembro del grupo
+            Integer idGrupo = gasto.getPlanOrigen().getGrupo().getId();
+            boolean esMiembro = perfilRepository.existeUsuarioEnGrupoPorEmail(email, idGrupo);
+            if (!esMiembro) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("No eres miembro de este grupo.");
+            }
+
+            // Convertir request a entidades
+            List<RepartoDeuda> deudas = deudasRequest.stream()
+                    .map(req -> new RepartoDeuda(idGasto, req.getIdUsuarioDeudor(), req.getCuotaDebe()))
+                    .collect(Collectors.toList());
+
+            // Asignar deudas
+            repartoDeudaService.asignarDeudasPersonalizadas(idGasto, deudas);
+
+            // Obtener las deudas guardadas y mapear a response
+            List<RepartoDeuda> deudasGuardadas = repartoDeudaService.obtenerDeudasPorGasto(idGasto);
+            List<RepartoDeudaResponse> response = deudasGuardadas.stream()
+                    .map(d -> new RepartoDeudaResponse(d.getId().getIdGasto(), d.getId().getIdUsuarioDeudor(), d.getCuotaDebe()))
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+
 }

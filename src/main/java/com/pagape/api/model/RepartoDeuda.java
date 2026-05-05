@@ -1,41 +1,31 @@
 package com.pagape.api.model;
 
+import java.math.BigDecimal;
+
+import com.pagape.api.model.auxiliar_id.RepartoDeudaId;
+
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "reparto_deudas")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class RepartoDeuda {
 
-    private int idGasto;
-    private int idUsuarioDeudor;
-    private float cuotaDebe;
+    @EmbeddedId
+    private RepartoDeudaId id;
 
-    public RepartoDeuda() {
-    }
+    private BigDecimal cuotaDebe;
 
-    public RepartoDeuda(int idGasto, int idUsuarioDeudor, float cuotaDebe) {
-        this.idGasto = idGasto;
-        this.idUsuarioDeudor = idUsuarioDeudor;
-        this.cuotaDebe = cuotaDebe;
-    }
-
-    public int getIdGasto() {
-        return idGasto;
-    }
-
-    public void setIdGasto(int idGasto) {
-        this.idGasto = idGasto;
-    }
-
-    public int getIdUsuarioDeudor() {
-        return idUsuarioDeudor;
-    }
-
-    public void setIdUsuarioDeudor(int idUsuarioDeudor) {
-        this.idUsuarioDeudor = idUsuarioDeudor;
-    }
-
-    public float getCuotaDebe() {
-        return cuotaDebe;
-    }
-
-    public void setCuotaDebe(float cuotaDebe) {
+    // Constructor para facilitar creación
+    public RepartoDeuda(Integer idGasto, Integer idUsuarioDeudor, BigDecimal cuotaDebe) {
+        this.id = new RepartoDeudaId(idGasto, idUsuarioDeudor);
         this.cuotaDebe = cuotaDebe;
     }
 }
