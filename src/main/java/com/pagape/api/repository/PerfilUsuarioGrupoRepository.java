@@ -36,5 +36,6 @@ public interface PerfilUsuarioGrupoRepository extends JpaRepository<PerfilUsuari
 
     public boolean existsByUsuarioAndGrupo(Usuario usuario, Grupo grupo);
 
-    boolean existsById_IdUsuario_EmailAndId_IdGrupo(String email, Integer idGrupo);
+    @Query("SELECT COUNT(p) > 0 FROM PerfilUsuarioGrupo p WHERE p.usuario.email = :email AND p.grupo.id = :idGrupo")
+    boolean existeUsuarioEnGrupoPorEmail(@Param("email") String email, @Param("idGrupo") Integer idGrupo);
 }

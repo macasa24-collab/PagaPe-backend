@@ -87,7 +87,7 @@ public class GastoController {
             String email = authentication.getName();
 
             // Validación de seguridad en Linux
-            boolean esMiembro = perfilRepository.existsById_IdUsuario_EmailAndId_IdGrupo(email, idGrupo);
+            boolean esMiembro = perfilRepository.existeUsuarioEnGrupoPorEmail(email, idGrupo);
 
             if (!esMiembro) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -119,7 +119,7 @@ public class GastoController {
             String email = authentication.getName();
             Integer idGrupo = gasto.getPlanOrigen().getGrupo().getId();
 
-            if (!perfilRepository.existsById_IdUsuario_EmailAndId_IdGrupo(email, idGrupo)) {
+            if (!perfilRepository.existeUsuarioEnGrupoPorEmail(email, idGrupo)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 

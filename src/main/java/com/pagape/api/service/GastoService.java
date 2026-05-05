@@ -34,7 +34,6 @@ public class GastoService {
     @Autowired
     private PerfilUsuarioGrupoRepository perfilRepository; // Necesario para verificar pertenencia
 
-    // 1. DEBES AÑADIR ESTA VARIABLE AQUÍ ARRIBA 👈
     @Value("${storage.location}")
     private String storageLocation;
 
