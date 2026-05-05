@@ -1,6 +1,7 @@
 package com.pagape.api.controller;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -13,8 +14,8 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication; // Asegúrate que el nombre coincida (UserService o UsuarioService)
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin; // Asegúrate que el nombre coincida (UserService o UsuarioService)
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +30,7 @@ import com.pagape.api.dto.response.GastoResponse;
 import com.pagape.api.dto.response.RepartoDeudaResponse;
 import com.pagape.api.dto.response.UsuarioResponse;
 import com.pagape.api.model.Gasto;
+import com.pagape.api.model.PerfilUsuarioGrupo;
 import com.pagape.api.model.RepartoDeuda;
 import com.pagape.api.model.Usuario;
 import com.pagape.api.repository.GastoRepository;
@@ -96,6 +98,32 @@ public class GastoController {
                     nuevoGasto.getConcepto(),
                     nuevoGasto.getUrlFotoTicket()
             );
+
+            // Lógica de división de deuda
+            Integer idGrupo = nuevoGasto.getPlanOrigen().getGrupo().getId();
+            List<PerfilUsuarioGrupo> miembros = perfilRepository.findByGrupoId(idGrupo);
+            List<Usuario> deudores = miembros.stream()
+                    .map(PerfilUsuarioGrupo::getUsuario)
+                    .filter(u -> !u.getId().equals(pagador.getId()))
+                    .collect(Collectors.toList());
+
+            int totalMiembros = miembros.size();
+            if (totalMiembros > 0) {
+                BigDecimal cuota = importe.divide(BigDecimal.valueOf(totalMiembros), 2, RoundingMode.HALF_UP);
+                for (Usuario deudor : deudores) {
+                    RepartoDeuda reparto = new RepartoDeuda(nuevoGasto.getId(), deudor.getId(), cuota);
+                    repartoDeudaRepository.save(reparto);
+                }
+
+                // Actualizar balances
+                for (PerfilUsuarioGrupo perfil : miembros) {
+                    BigDecimal totalOwedToThem = repartoDeudaRepository.sumCuotaDebeWherePagadorIs(perfil.getUsuario().getId(), idGrupo);
+                    BigDecimal totalTheyOwe = repartoDeudaRepository.sumCuotaDebeWhereDeudorIs(perfil.getUsuario().getId(), idGrupo);
+                    BigDecimal balance = totalOwedToThem.subtract(totalTheyOwe);
+                    perfil.setBalanceActual(balance);
+                    perfilRepository.save(perfil);
+                }
+            }
 
             // Devolvemos el DTO
             return ResponseEntity.status(HttpStatus.CREATED).body(gastoResponse);
