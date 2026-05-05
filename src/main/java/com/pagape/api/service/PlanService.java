@@ -71,6 +71,14 @@ public class PlanService {
         return planRepository.findByGrupoId(idGrupo);
     }
 
+    public List<PlanResponse> listarPlanesPorUsuario(Integer usuarioId) {
+    // Busca planes de grupos donde el usuario es miembro
+    // SELECT p FROM Plan p JOIN p.grupo g JOIN g.miembros m WHERE m.id = :usuarioId
+    return planRepository.findAllByUsuarioId(usuarioId).stream()
+        .map(this::convertToResponse) // Tu método actual para convertir a DTO
+        .collect(Collectors.toList());
+}
+
     public List<PlanResponse> listarPlanesConVotos(Integer idGrupo) {
         List<Plan> planes = planRepository.findByGrupoId(idGrupo);
 
