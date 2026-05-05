@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.pagape.api.dto.response.GastoResponse;
+import com.pagape.api.dto.response.UsuarioResponse;
 import com.pagape.api.model.Gasto;
 import com.pagape.api.model.Usuario;
 import com.pagape.api.repository.GastoRepository;
@@ -67,8 +70,22 @@ public class GastoController {
             // Llamamos al servicio pasando los datos sueltos
             Gasto nuevoGasto = gastoService.crearGasto(idPlan, pagador, importe, concepto, archivo);
 
-            // Devolvemos el objeto Expense que el front espera mapear
-            return ResponseEntity.status(HttpStatus.CREATED).body(nuevoGasto);
+            // Mapeamos a DTO para evitar bucles JSON
+            UsuarioResponse pagadorResponse = new UsuarioResponse(
+                pagador.getId(),
+                pagador.getNombre(),
+                pagador.getEmail()
+            );
+            GastoResponse gastoResponse = new GastoResponse(
+                nuevoGasto.getId(),
+                pagadorResponse,
+                nuevoGasto.getImporte(),
+                nuevoGasto.getConcepto(),
+                nuevoGasto.getUrlFotoTicket()
+            );
+
+            // Devolvemos el DTO
+            return ResponseEntity.status(HttpStatus.CREATED).body(gastoResponse);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
@@ -95,7 +112,24 @@ public class GastoController {
             }
 
             List<Gasto> gastos = gastoService.listarGastosConfirmadosPorGrupo(idGrupo);
-            return ResponseEntity.ok(gastos);
+
+            // Mapeamos a DTOs
+            List<GastoResponse> gastosResponse = gastos.stream().map(gasto -> {
+                UsuarioResponse pagadorResponse = new UsuarioResponse(
+                    gasto.getPagador().getId(),
+                    gasto.getPagador().getNombre(),
+                    gasto.getPagador().getEmail()
+                );
+                return new GastoResponse(
+                    gasto.getId(),
+                    pagadorResponse,
+                    gasto.getImporte(),
+                    gasto.getConcepto(),
+                    gasto.getUrlFotoTicket()
+                );
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(gastosResponse);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
