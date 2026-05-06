@@ -1,6 +1,7 @@
 package com.pagape.api.dto.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,4 +17,5 @@ public class MiembroResponse {
     private String email;
     private boolean esAdmin;
     private BigDecimal balance;
+    private LocalDateTime fechaIngreso;
 }

@@ -110,11 +110,12 @@ public class PerfilUsuarioGrupoService {
 
         // 2. Mapeamos a nuestro DTO de miembros
         return perfiles.stream().map(perfil -> new MiembroResponse(
-                perfil.getUsuario().getId(),
-                perfil.getUsuario().getNombre(),
-                perfil.getUsuario().getEmail(),
-                perfil.isEsAdmin(),
-                perfil.getBalanceActual()
+            perfil.getUsuario().getId(),
+            perfil.getUsuario().getNombre(),
+            perfil.getUsuario().getEmail(),
+            perfil.isEsAdmin(),
+            perfil.getBalanceActual(),
+            perfil.getFechaIngreso()
         )).collect(Collectors.toList());
     }
 }
