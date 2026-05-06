@@ -15,19 +15,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin; // Asegúrate que el nombre coincida (UserService o UsuarioService)
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMapping; // Asegúrate que el nombre coincida (UserService o UsuarioService)
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.pagape.api.dto.request.RepartoDeudaRequest;
 import com.pagape.api.dto.response.GastoResponse;
-import com.pagape.api.dto.response.RepartoDeudaResponse;
 import com.pagape.api.dto.response.UsuarioResponse;
 import com.pagape.api.model.Gasto;
 import com.pagape.api.model.PerfilUsuarioGrupo;
@@ -35,6 +33,7 @@ import com.pagape.api.model.RepartoDeuda;
 import com.pagape.api.model.Usuario;
 import com.pagape.api.repository.GastoRepository;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
+import com.pagape.api.repository.PlanRepository;
 import com.pagape.api.repository.RepartoDeudaRepository;
 import com.pagape.api.service.GastoService;
 import com.pagape.api.service.RepartoDeudaService;
@@ -66,12 +65,15 @@ public class GastoController {
     @Autowired
     private RepartoDeudaRepository repartoDeudaRepository;
 
-    @PostMapping("/{idPlan}/new") // Ajusta la ruta a /plans/{idPlan}/expense si quieres ser fiel al Flutter
+    @Autowired
+    private PlanRepository planRepository;
+
+    @PostMapping("/{idPlan}/new")
     public ResponseEntity<?> registrarGasto(
             @PathVariable Integer idPlan,
-            @RequestParam("importe") BigDecimal importe,
-            @RequestParam("concepto") String concepto,
-            @RequestParam(value = "ticket", required = false) MultipartFile archivo,
+            @RequestPart("importe") BigDecimal importe,
+            @RequestPart("concepto") String concepto,
+            @RequestPart(value = "ticket", required = false) MultipartFile archivo,
             Authentication authentication) {
         try {
             String emailUsuario = authentication.getName();
@@ -216,47 +218,66 @@ public class GastoController {
     }
 
     /**
-     * Endpoint para asignar deudas personalizadas a un gasto
+     * Endpoint para crear gasto con deudas personalizadas (NO usa división
+     * automática)
      */
-    @PostMapping("/{idGasto}/custom-debts")
-    public ResponseEntity<?> asignarDeudasPersonalizadas(
-            @PathVariable Integer idGasto,
-            @RequestBody List<RepartoDeudaRequest> deudasRequest,
+    @PostMapping("/{idPlan}/new-custom-debts")
+    public ResponseEntity<?> crearGastoConDeudasPersonalizadas(
+            @PathVariable Integer idPlan,
+            @RequestPart("importe") BigDecimal importe,
+            @RequestPart("concepto") String concepto,
+            @RequestPart(value = "ticket", required = false) MultipartFile archivo,
+            @RequestPart("deudas") List<RepartoDeudaRequest> deudasRequest,
             Authentication authentication) {
         try {
-            String email = authentication.getName();
+            String emailUsuario = authentication.getName();
+            Usuario pagador = usuarioService.obtenerPorEmail(emailUsuario);
 
-            // Verificar que el gasto existe
-            Gasto gasto = gastoRepository.findById(idGasto)
-                    .orElseThrow(() -> new RuntimeException("Gasto no encontrado"));
-
-            // Verificar que el usuario es miembro del grupo
-            Integer idGrupo = gasto.getPlanOrigen().getGrupo().getId();
-            boolean esMiembro = perfilRepository.existeUsuarioEnGrupoPorEmail(email, idGrupo);
-            if (!esMiembro) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body("No eres miembro de este grupo.");
+            if (pagador == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no válido");
             }
 
-            // Convertir request a entidades
+            // 1. Llamamos al servicio para crear el gasto (MISMA LÓGICA que registrarGasto)
+            Gasto nuevoGasto = gastoService.crearGasto(idPlan, pagador, importe, concepto, archivo);
+
+            // 2. Mapeamos a DTO para evitar bucles JSON
+            UsuarioResponse pagadorResponse = new UsuarioResponse(
+                    pagador.getId(),
+                    pagador.getNombre(),
+                    pagador.getEmail()
+            );
+            GastoResponse gastoResponse = new GastoResponse(
+                    nuevoGasto.getId(),
+                    idPlan,
+                    pagadorResponse,
+                    nuevoGasto.getImporte(),
+                    nuevoGasto.getConcepto(),
+                    nuevoGasto.getUrlFotoTicket()
+            );
+
+            // 3. VALIDACIÓN: La suma de deudas NO debe exceder el importe del gasto
+            BigDecimal totalDeudas = deudasRequest.stream()
+                    .map(RepartoDeudaRequest::getCuotaDebe)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (totalDeudas.compareTo(importe) > 0) {
+                return ResponseEntity.badRequest()
+                        .body("Error: La suma de deudas (" + totalDeudas + ") excede el importe del gasto (" + importe + ")");
+            }
+
+            // 4. Lógica de deudas personalizadas (DIFERENCIA con registrarGasto)
+            Integer idGrupo = nuevoGasto.getPlanOrigen().getGrupo().getId();
+            List<PerfilUsuarioGrupo> miembros = perfilRepository.findByGrupoId(idGrupo);
+
+            // Crear deudas personalizadas SOLO para los miembros que NO son el pagador
             List<RepartoDeuda> deudas = deudasRequest.stream()
-                    .map(req -> new RepartoDeuda(idGasto, req.getIdUsuarioDeudor(), req.getCuotaDebe()))
+                    .filter(deuda -> !deuda.getIdUsuarioDeudor().equals(pagador.getId())) // Excluir al pagador
+                    .map(req -> new RepartoDeuda(nuevoGasto.getId(), req.getIdUsuarioDeudor(), req.getCuotaDebe()))
                     .collect(Collectors.toList());
 
-            // Asignar deudas
-            repartoDeudaService.asignarDeudasPersonalizadas(idGasto, deudas);
+            // Guardar las deudas
+            repartoDeudaRepository.saveAll(deudas);
 
-            // Validar que la suma de deudas no exceda el importe del gasto
-            BigDecimal totalDeudas = deudas.stream()
-                    .map(RepartoDeuda::getCuotaDebe)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            if (totalDeudas.compareTo(gasto.getImporte()) > 0) {
-                return ResponseEntity.badRequest()
-                        .body("Error: La suma de deudas (" + totalDeudas + ") excede el importe del gasto (" + gasto.getImporte() + ")");
-            }
-
-            // Actualizar balances de todos los miembros del grupo
-            List<PerfilUsuarioGrupo> miembros = perfilRepository.findByGrupoId(idGrupo);
+            // 5. Actualizar balances (IGUAL que registrarGasto)
             for (PerfilUsuarioGrupo perfil : miembros) {
                 BigDecimal totalOwedToThem = repartoDeudaRepository.sumCuotaDebeWherePagadorIs(perfil.getUsuario().getId(), idGrupo);
                 BigDecimal totalTheyOwe = repartoDeudaRepository.sumCuotaDebeWhereDeudorIs(perfil.getUsuario().getId(), idGrupo);
@@ -265,13 +286,8 @@ public class GastoController {
                 perfilRepository.save(perfil);
             }
 
-            // Obtener las deudas guardadas y mapear a response
-            List<RepartoDeuda> deudasGuardadas = repartoDeudaService.obtenerDeudasPorGasto(idGasto);
-            List<RepartoDeudaResponse> response = deudasGuardadas.stream()
-                    .map(d -> new RepartoDeudaResponse(d.getId().getIdGasto(), d.getId().getIdUsuarioDeudor(), d.getCuotaDebe()))
-                    .collect(Collectors.toList());
-
-            return ResponseEntity.ok(response);
+            // Devolvemos el DTO
+            return ResponseEntity.status(HttpStatus.CREATED).body(gastoResponse);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
