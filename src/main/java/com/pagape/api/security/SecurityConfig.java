@@ -10,8 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@Configuration // Define esta clase como fuente de configuración para el contexto de Spring
-@EnableWebSecurity // Habilita la seguridad web personalizada en la aplicación
+@Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
@@ -19,13 +19,15 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll() // Login y Registro son públicos
-                .anyRequest().authenticated() // Todo lo demás requiere Token
+                        .requestMatchers("/auth/**").permitAll()
+                        // WebSocket handshake y SockJS deben ser públicos
+                        .requestMatchers("/ws/chat/**").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // ¡IMPORTANTE! No guardamos sesiones
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // Ponemos nuestro filtro antes del estándar
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
