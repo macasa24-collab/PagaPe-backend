@@ -246,6 +246,25 @@ public class GastoController {
             // Asignar deudas
             repartoDeudaService.asignarDeudasPersonalizadas(idGasto, deudas);
 
+            // Validar que la suma de deudas no exceda el importe del gasto
+            BigDecimal totalDeudas = deudas.stream()
+                    .map(RepartoDeuda::getCuotaDebe)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (totalDeudas.compareTo(gasto.getImporte()) > 0) {
+                return ResponseEntity.badRequest()
+                        .body("Error: La suma de deudas (" + totalDeudas + ") excede el importe del gasto (" + gasto.getImporte() + ")");
+            }
+
+            // Actualizar balances de todos los miembros del grupo
+            List<PerfilUsuarioGrupo> miembros = perfilRepository.findByGrupoId(idGrupo);
+            for (PerfilUsuarioGrupo perfil : miembros) {
+                BigDecimal totalOwedToThem = repartoDeudaRepository.sumCuotaDebeWherePagadorIs(perfil.getUsuario().getId(), idGrupo);
+                BigDecimal totalTheyOwe = repartoDeudaRepository.sumCuotaDebeWhereDeudorIs(perfil.getUsuario().getId(), idGrupo);
+                BigDecimal balance = totalOwedToThem.subtract(totalTheyOwe);
+                perfil.setBalanceActual(balance);
+                perfilRepository.save(perfil);
+            }
+
             // Obtener las deudas guardadas y mapear a response
             List<RepartoDeuda> deudasGuardadas = repartoDeudaService.obtenerDeudasPorGasto(idGasto);
             List<RepartoDeudaResponse> response = deudasGuardadas.stream()
