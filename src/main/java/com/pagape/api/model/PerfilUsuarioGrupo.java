@@ -1,7 +1,7 @@
 package com.pagape.api.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.pagape.api.model.auxiliar_id.PerfilUsuarioGrupoId;
 
@@ -47,13 +47,13 @@ public class PerfilUsuarioGrupo {
     private BigDecimal balanceActual;
 
     @Column(name = "fecha_ingreso")
-    private LocalDate fechaIngreso;
+    private LocalDateTime fechaIngreso;
 
     public PerfilUsuarioGrupo(Usuario usuario, Grupo grupo) {
         this.id = new PerfilUsuarioGrupoId(usuario.getId(), grupo.getId());
         this.usuario = usuario;
         this.grupo = grupo;
-        this.fechaIngreso = LocalDate.now();
+        this.fechaIngreso = LocalDateTime.now();
     }
 
 }
