@@ -225,9 +225,9 @@ public class GastoController {
     @PostMapping("/{idPlan}/new-custom-debts")
     public ResponseEntity<?> crearGastoConDeudasPersonalizadas(
             @PathVariable Integer idPlan,
-            @RequestPart("importe") BigDecimal importe,
-            @RequestPart("concepto") String concepto,
-            @RequestPart(value = "ticket", required = false) MultipartFile archivo,
+            @RequestParam("importe") BigDecimal importe,
+            @RequestParam("concepto") String concepto,
+            @RequestParam(value = "ticket", required = false) MultipartFile archivo,
             @RequestPart("deudas") List<RepartoDeudaRequest> deudasRequest,
             Authentication authentication) {
         try {
