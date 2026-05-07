@@ -23,9 +23,12 @@ public class RepartoDeuda {
 
     private BigDecimal cuotaDebe;
 
+    private Boolean pagado = false;
+
     // Constructor para facilitar creación
     public RepartoDeuda(Integer idGasto, Integer idUsuarioDeudor, BigDecimal cuotaDebe) {
         this.id = new RepartoDeudaId(idGasto, idUsuarioDeudor);
         this.cuotaDebe = cuotaDebe;
+        this.pagado = false;
     }
 }

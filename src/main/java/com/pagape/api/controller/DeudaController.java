@@ -1,7 +1,6 @@
 package com.pagape.api.controller;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +13,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pagape.api.dto.response.DeudaUsuarioResponse;
-import com.pagape.api.model.Gasto;
+import com.pagape.api.dto.response.RepartoDeudaResponse;
 import com.pagape.api.model.RepartoDeuda;
 import com.pagape.api.model.Usuario;
-import com.pagape.api.repository.GastoRepository;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
 import com.pagape.api.repository.RepartoDeudaRepository;
 import com.pagape.api.service.UserService;
@@ -36,9 +33,6 @@ public class DeudaController {
 
     @Autowired
     private RepartoDeudaRepository repartoDeudaRepository;
-
-    @Autowired
-    private GastoRepository gastoRepository;
 
     /**
      * Devuelve las deudas del usuario autenticado dentro de un grupo específico.
@@ -70,19 +64,12 @@ public class DeudaController {
             List<RepartoDeuda> deudas = repartoDeudaRepository.findByUsuarioDeudorAndGrupo(usuarioAutenticado.getId(), groupId);
 
             // Mapear las deudas a la respuesta esperada por el frontend
-            List<DeudaUsuarioResponse> response = deudas.stream()
-                    .map(d -> {
-                        Gasto gasto = gastoRepository.findById(d.getId().getIdGasto()).orElse(null);
-                        if (gasto == null) {
-                            return null;
-                        }
-                        return new DeudaUsuarioResponse(
-                                d.getId().getIdGasto(),
-                                gasto.getPlanOrigen().getId(),
-                                gasto.getPagador().getId(),
-                                d.getCuotaDebe());
-                    })
-                    .filter(Objects::nonNull)
+            List<RepartoDeudaResponse> response = deudas.stream()
+                    .map(d -> new RepartoDeudaResponse(
+                            d.getId().getIdGasto(),
+                            d.getId().getIdUsuarioDeudor(),
+                            d.getCuotaDebe(),
+                            d.getPagado()))
                     .collect(Collectors.toList());
 
             return ResponseEntity.ok(response);
