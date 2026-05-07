@@ -23,7 +23,7 @@ public class RepartoDeuda {
 
     private BigDecimal cuotaDebe;
 
-    private Boolean pagado = false;
+    private boolean pagado = false;
 
     // Constructor para facilitar creación
     public RepartoDeuda(Integer idGasto, Integer idUsuarioDeudor, BigDecimal cuotaDebe) {

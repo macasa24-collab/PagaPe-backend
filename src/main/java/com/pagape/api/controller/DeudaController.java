@@ -35,8 +35,9 @@ public class DeudaController {
     private RepartoDeudaRepository repartoDeudaRepository;
 
     /**
-     * Devuelve las deudas del usuario autenticado dentro de un grupo específico.
-     * El usuario se toma del token JWT en Authentication, no de la URL.
+     * Devuelve las deudas del usuario autenticado dentro de un grupo
+     * específico. El usuario se toma del token JWT en Authentication, no de la
+     * URL.
      */
     @GetMapping("/my-debts/{groupId}")
     public ResponseEntity<?> obtenerDeudasUsuarioEnGrupo(
@@ -66,10 +67,10 @@ public class DeudaController {
             // Mapear las deudas a la respuesta esperada por el frontend
             List<RepartoDeudaResponse> response = deudas.stream()
                     .map(d -> new RepartoDeudaResponse(
-                            d.getId().getIdGasto(),
-                            d.getId().getIdUsuarioDeudor(),
-                            d.getCuotaDebe(),
-                            d.getPagado()))
+                    d.getId().getIdGasto(),
+                    d.getId().getIdUsuarioDeudor(),
+                    d.getCuotaDebe(),
+                    d.isPagado()))
                     .collect(Collectors.toList());
 
             return ResponseEntity.ok(response);

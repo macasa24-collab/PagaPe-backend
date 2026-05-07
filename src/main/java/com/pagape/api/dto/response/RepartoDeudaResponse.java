@@ -14,5 +14,5 @@ public class RepartoDeudaResponse {
     private Integer idGasto;
     private Integer idUsuarioDeudor;
     private BigDecimal cuotaDebe;
-    private Boolean pagado;
+    private boolean pagado;
 }
