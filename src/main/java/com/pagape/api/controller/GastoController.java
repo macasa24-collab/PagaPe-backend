@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping; // Asegúrate que el nombre coincida (UserService o UsuarioService)
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -71,9 +72,9 @@ public class GastoController {
     @PostMapping("/{idPlan}/new")
     public ResponseEntity<?> registrarGasto(
             @PathVariable Integer idPlan,
-            @RequestPart("importe") BigDecimal importe,
-            @RequestPart("concepto") String concepto,
-            @RequestPart(value = "ticket", required = false) MultipartFile archivo,
+            @RequestParam("importe") BigDecimal importe,
+            @RequestParam("concepto") String concepto,
+            @RequestParam(value = "ticket", required = false) MultipartFile archivo,
             Authentication authentication) {
         try {
             String emailUsuario = authentication.getName();
