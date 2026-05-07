@@ -93,11 +93,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // 4. Establecemos al usuario como autenticado globalmente en esta petición
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    // DIAGNÓSTICO - Devolvemos mensaje de error en la respuesta
+                    response.setStatus(403);
+                    response.setContentType("application/json");
+                    if (!usuarioOptional.isPresent()) {
+                        response.getWriter().write("{\"error\": \"Usuario " + userEmail + " no existe en la BD. Debes registrarte o hacer login de nuevo.\"}");
+                    } else if (!jwtService.isTokenValid(jwt)) {
+                        response.getWriter().write("{\"error\": \"Token inválido o expirado. Haz login de nuevo.\"}");
+                    }
+                    return;
                 }
             }
         } catch (Exception e) {
             // Log de error en caso de que el token esté corrupto o haya expirado
             this.logger.error("Error al procesar el token JWT: " + e.getMessage());
+            response.setStatus(401);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Token inválido o expirado: " + e.getMessage() + "\"}");
+            return;
         }
 
         // 5. IMPORTANTE: Continuar con la cadena de filtros hacia el controlador

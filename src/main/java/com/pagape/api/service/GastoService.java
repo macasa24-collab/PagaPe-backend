@@ -40,13 +40,18 @@ public class GastoService {
     @Transactional
     public Gasto crearGasto(Integer idPlan, Usuario pagador, BigDecimal importe, String concepto, MultipartFile archivo) throws IOException {
 
-        // 1. Validaciones de Plan y Membresía (igual que antes)
+        // 1. Validaciones de Plan y Membresía
         Plan plan = planRepository.findById(idPlan)
-                .orElseThrow(() -> new RuntimeException("El plan no existe"));
+                .orElseThrow(() -> new RuntimeException("ERROR: El plan " + idPlan + " no existe en la BD"));
 
-        boolean esMiembro = perfilRepository.existsByIdIdUsuarioAndIdIdGrupo(pagador.getId(), plan.getGrupo().getId());
+        if (plan.getGrupo() == null) {
+            throw new RuntimeException("ERROR: El plan no tiene grupo asociado");
+        }
+
+        Integer idGrupo = plan.getGrupo().getId();
+        boolean esMiembro = perfilRepository.existsByIdIdUsuarioAndIdIdGrupo(pagador.getId(), idGrupo);
         if (!esMiembro) {
-            throw new RuntimeException("No eres miembro del grupo");
+            throw new RuntimeException("ERROR: El usuario " + pagador.getEmail() + " NO pertenece al grupo " + idGrupo);
         }
 
         // 2. Creamos y guardamos el gasto primero (para tener el ID)
