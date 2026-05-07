@@ -147,6 +147,28 @@ public class GrupoController {
         }
     }
 
+    @PostMapping("/{grupoId}/leave")
+    public ResponseEntity<?> salirDelGrupo(@PathVariable Integer grupoId, Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            Usuario usuario = userService.obtenerPorEmail(email);
+
+            if (usuario == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("mensaje", "Usuario no encontrado"));
+            }
+
+            String resultado = perfilService.salirDelGrupo(usuario.getId(), grupoId);
+            if (resultado.startsWith("Error")) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", resultado));
+            }
+
+            return ResponseEntity.ok(Map.of("mensaje", resultado));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "No se pudo procesar la salida del grupo"));
+        }
+    }
+
     @GetMapping("/{grupoId}/members")
     public ResponseEntity<?> obtenerMiembros(@PathVariable Integer grupoId, Authentication authentication) {
         try {

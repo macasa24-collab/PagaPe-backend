@@ -1,6 +1,7 @@
 package com.pagape.api.service;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -76,7 +77,32 @@ public class PerfilUsuarioGrupoService {
         perfilRepository.save(nuevoPerfil);
 
         return "Éxito: Te has unido a '" + grupo.getNombre() + "' como " + (nuevoPerfil.isEsAdmin() ? "ADMIN" : "MIEMBRO");
+    }
 
+    public String salirDelGrupo(Integer usuarioId, Integer grupoId) {
+        Optional<PerfilUsuarioGrupo> perfilOpt = perfilRepository.findByIdsDirectos(usuarioId, grupoId);
+        if (perfilOpt.isEmpty()) {
+            return "Error: No perteneces a este grupo.";
+        }
+
+        PerfilUsuarioGrupo perfil = perfilOpt.get();
+        boolean eraAdmin = perfil.isEsAdmin();
+        String nombreGrupo = perfil.getGrupo().getNombre();
+
+        perfilRepository.delete(perfil);
+
+        if (eraAdmin) {
+            List<PerfilUsuarioGrupo> restantes = perfilRepository.findByGrupoId(grupoId);
+            if (!restantes.isEmpty()) {
+                PerfilUsuarioGrupo nuevoAdmin = restantes.stream()
+                        .min(Comparator.comparing(PerfilUsuarioGrupo::getFechaIngreso))
+                        .get();
+                nuevoAdmin.setEsAdmin(true);
+                perfilRepository.save(nuevoAdmin);
+            }
+        }
+
+        return "Éxito: Has salido del grupo '" + nombreGrupo + "'.";
     }
 
     public List<GrupoResponse> listarMisGrupos(Integer usuarioId) {
@@ -110,12 +136,12 @@ public class PerfilUsuarioGrupoService {
 
         // 2. Mapeamos a nuestro DTO de miembros
         return perfiles.stream().map(perfil -> new MiembroResponse(
-            perfil.getUsuario().getId(),
-            perfil.getUsuario().getNombre(),
-            perfil.getUsuario().getEmail(),
-            perfil.isEsAdmin(),
-            perfil.getBalanceActual(),
-            perfil.getFechaIngreso()
+                perfil.getUsuario().getId(),
+                perfil.getUsuario().getNombre(),
+                perfil.getUsuario().getEmail(),
+                perfil.isEsAdmin(),
+                perfil.getBalanceActual(),
+                perfil.getFechaIngreso()
         )).collect(Collectors.toList());
     }
 }
