@@ -20,14 +20,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Punto de conexión WebSocket — Flutter conectará aquí
-        // SockJS como fallback para clientes que no soporten WS nativo
+        // Endpoint nativo WebSocket — Flutter usa este directamente (debe ir primero)
+        registry.addEndpoint("/ws/chat")
+                .setAllowedOriginPatterns("*");
+
+        // SockJS como fallback para clientes web que no soporten WS nativo
         registry.addEndpoint("/ws/chat")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
-
-        // Endpoint nativo WebSocket (Flutter usa este directamente)
-        registry.addEndpoint("/ws/chat")
-                .setAllowedOriginPatterns("*");
     }
 }
