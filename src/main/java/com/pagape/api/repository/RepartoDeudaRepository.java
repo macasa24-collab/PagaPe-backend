@@ -19,10 +19,10 @@ public interface RepartoDeudaRepository extends JpaRepository<RepartoDeuda, Repa
     // Método para encontrar deudas de un usuario en un gasto específico
     RepartoDeuda findById_IdGastoAndId_IdUsuarioDeudor(Integer idGasto, Integer idUsuarioDeudor);
 
-    @Query("SELECT COALESCE(SUM(r.cuotaDebe), 0) FROM RepartoDeuda r JOIN Gasto g ON r.id.idGasto = g.id WHERE g.pagador.id = :userId AND g.planOrigen.grupo.id = :grupoId")
+    @Query("SELECT COALESCE(SUM(r.cuotaDebe), 0) FROM RepartoDeuda r JOIN Gasto g ON r.id.idGasto = g.id WHERE g.pagador.id = :userId AND g.planOrigen.grupo.id = :grupoId AND r.pagado = false")
     BigDecimal sumCuotaDebeWherePagadorIs(@Param("userId") Integer userId, @Param("grupoId") Integer grupoId);
 
-    @Query("SELECT COALESCE(SUM(r.cuotaDebe), 0) FROM RepartoDeuda r JOIN Gasto g ON r.id.idGasto = g.id WHERE r.id.idUsuarioDeudor = :userId AND g.planOrigen.grupo.id = :grupoId")
+    @Query("SELECT COALESCE(SUM(r.cuotaDebe), 0) FROM RepartoDeuda r JOIN Gasto g ON r.id.idGasto = g.id WHERE r.id.idUsuarioDeudor = :userId AND g.planOrigen.grupo.id = :grupoId AND r.pagado = false")
     BigDecimal sumCuotaDebeWhereDeudorIs(@Param("userId") Integer userId, @Param("grupoId") Integer grupoId);
 
     @Query("SELECT r FROM RepartoDeuda r JOIN Gasto g ON r.id.idGasto = g.id WHERE r.id.idUsuarioDeudor = :userId AND g.planOrigen.grupo.id = :grupoId")

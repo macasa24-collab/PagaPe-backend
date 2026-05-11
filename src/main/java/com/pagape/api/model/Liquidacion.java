@@ -1,89 +1,68 @@
 package com.pagape.api.model;
 
+import java.math.BigDecimal;
+
+import org.hibernate.annotations.Check;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+@Entity
+@Table(name = "liquidaciones")
+@Check(constraints = "id_pagador <> id_receptor AND importe > 0")
+@Data
+@NoArgsConstructor
 public class Liquidacion {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private int idPagador;
-    private int idReceptor;
-    private int idGrupo;
-    private float importe;
+
+    @ManyToOne
+    @JoinColumn(name = "id_grupo", nullable = false)
+    @ToString.Exclude
+    private Grupo grupo;
+
+    @ManyToOne
+    @JoinColumn(name = "id_pagador", nullable = false)
+    @ToString.Exclude
+    private Usuario pagador;
+
+    @ManyToOne
+    @JoinColumn(name = "id_receptor", nullable = false)
+    @ToString.Exclude
+    private Usuario receptor;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal importe;
+
+    @Column(length = 300)
     private String concepto;
-    private boolean estadoConfirmacion;
-    private String metodoPago;
 
-    public Liquidacion() {
-    }
+    @Column(name = "estado_confirmacion")
+    private boolean estadoConfirmacion = false;
 
-    public Liquidacion(int idPagador, int idReceptor, int idGrupo, float importe, String concepto, String metodoPago) {
-        this.idPagador = idPagador;
-        this.idReceptor = idReceptor;
-        this.idGrupo = idGrupo;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "metodo_pago", length = 20, nullable = false)
+    private MetodoPago metodoPago;
+
+    public Liquidacion(Grupo grupo, Usuario pagador, Usuario receptor, BigDecimal importe, String concepto, MetodoPago metodoPago) {
+        this.grupo = grupo;
+        this.pagador = pagador;
+        this.receptor = receptor;
         this.importe = importe;
         this.concepto = concepto;
-        this.metodoPago = metodoPago;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public int getIdPagador() {
-        return idPagador;
-    }
-
-    public void setIdPagador(int idPagador) {
-        this.idPagador = idPagador;
-    }
-
-    public int getIdReceptor() {
-        return idReceptor;
-    }
-
-    public void setIdReceptor(int idReceptor) {
-        this.idReceptor = idReceptor;
-    }
-
-    public int getIdGrupo() {
-        return idGrupo;
-    }
-
-    public void setIdGrupo(int idGrupo) {
-        this.idGrupo = idGrupo;
-    }
-
-    public float getImporte() {
-        return importe;
-    }
-
-    public void setImporte(float importe) {
-        this.importe = importe;
-    }
-
-    public String getConcepto() {
-        return concepto;
-    }
-
-    public void setConcepto(String concepto) {
-        this.concepto = concepto;
-    }
-
-    public boolean isEstadoConfirmacion() {
-        return estadoConfirmacion;
-    }
-
-    public void setEstadoConfirmacion(boolean estadoConfirmacion) {
-        this.estadoConfirmacion = estadoConfirmacion;
-    }
-
-    public String getMetodoPago() {
-        return metodoPago;
-    }
-
-    public void setMetodoPago(String metodoPago) {
         this.metodoPago = metodoPago;
     }
 

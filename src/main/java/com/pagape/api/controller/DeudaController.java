@@ -13,12 +13,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pagape.api.dto.request.LiquidacionRequest;
+import com.pagape.api.dto.response.LiquidacionResponse;
 import com.pagape.api.dto.response.RepartoDeudaResponse;
+import com.pagape.api.model.Liquidacion;
 import com.pagape.api.model.RepartoDeuda;
 import com.pagape.api.model.Usuario;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
 import com.pagape.api.repository.RepartoDeudaRepository;
+import com.pagape.api.service.LiquidacionService;
 import com.pagape.api.service.UserService;
+
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/debts")
@@ -33,6 +40,9 @@ public class DeudaController {
 
     @Autowired
     private RepartoDeudaRepository repartoDeudaRepository;
+
+    @Autowired
+    private LiquidacionService liquidacionService;
 
     /**
      * Devuelve las deudas del usuario autenticado dentro de un grupo
@@ -78,6 +88,43 @@ public class DeudaController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/pay")
+    public ResponseEntity<?> pagarDeudaIndividual(
+            @RequestBody LiquidacionRequest request,
+            Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            Usuario pagador = usuarioService.obtenerPorEmail(email);
+
+            if (pagador == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Usuario no válido para esta operación.");
+            }
+
+            Liquidacion liquidacion = liquidacionService.registrarPagoDeuda(
+                    request.getIdGasto(),
+                    pagador,
+                    request.getConcepto(),
+                    request.getMetodoPago());
+
+            LiquidacionResponse response = new LiquidacionResponse(
+                    liquidacion.getId(),
+                    liquidacion.getGrupo().getId(),
+                    liquidacion.getPagador().getId(),
+                    liquidacion.getReceptor().getId(),
+                    liquidacion.getImporte(),
+                    liquidacion.getConcepto(),
+                    liquidacion.isEstadoConfirmacion(),
+                    liquidacion.getMetodoPago()
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
 }
