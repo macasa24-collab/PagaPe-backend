@@ -38,4 +38,13 @@ public interface PerfilUsuarioGrupoRepository extends JpaRepository<PerfilUsuari
 
     @Query("SELECT COUNT(p) > 0 FROM PerfilUsuarioGrupo p WHERE p.usuario.email = :email AND p.grupo.id = :idGrupo")
     boolean existeUsuarioEnGrupoPorEmail(@Param("email") String email, @Param("idGrupo") Integer idGrupo);
+
+    // Devuelve los FCM tokens de los miembros del grupo, excluyendo al emisor y los que no tienen token
+    @Query("SELECT p.usuario.fcmToken FROM PerfilUsuarioGrupo p " +
+           "WHERE p.grupo.id = :grupoId " +
+           "AND p.usuario.id <> :emisorId " +
+           "AND p.usuario.fcmToken IS NOT NULL")
+    List<String> findFcmTokensDeGrupoExceptoEmisor(
+            @Param("grupoId") Integer grupoId,
+            @Param("emisorId") Integer emisorId);
 }
