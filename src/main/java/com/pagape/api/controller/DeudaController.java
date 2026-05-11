@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pagape.api.dto.request.LiquidacionRequest;
@@ -46,12 +47,13 @@ public class DeudaController {
 
     /**
      * Devuelve las deudas del usuario autenticado dentro de un grupo
-     * específico. El usuario se toma del token JWT en Authentication, no de la
+     * específico hacia un pagador específico. El usuario se toma del token JWT en Authentication, no de la
      * URL.
      */
     @GetMapping("/my-debts/{groupId}")
     public ResponseEntity<?> obtenerDeudasUsuarioEnGrupo(
             @PathVariable Integer groupId,
+            @RequestParam Integer pagadorId,
             Authentication authentication) {
         try {
             // Obtener el email del usuario a partir del token JWT
@@ -71,8 +73,8 @@ public class DeudaController {
                         .body("No eres miembro de este grupo.");
             }
 
-            // Buscar todas las deudas donde el usuario autenticado es deudor en ese grupo
-            List<RepartoDeuda> deudas = repartoDeudaRepository.findByUsuarioDeudorAndGrupo(usuarioAutenticado.getId(), groupId);
+            // Buscar todas las deudas donde el usuario autenticado es deudor en ese grupo hacia el pagador especificado
+            List<RepartoDeuda> deudas = repartoDeudaRepository.findByUsuarioDeudorAndGrupoAndPagador(usuarioAutenticado.getId(), groupId, pagadorId);
 
             // Mapear las deudas a la respuesta esperada por el frontend
             List<RepartoDeudaResponse> response = deudas.stream()

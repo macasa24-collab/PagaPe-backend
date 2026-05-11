@@ -25,7 +25,7 @@ public interface RepartoDeudaRepository extends JpaRepository<RepartoDeuda, Repa
     @Query("SELECT COALESCE(SUM(r.cuotaDebe), 0) FROM RepartoDeuda r JOIN Gasto g ON r.id.idGasto = g.id WHERE r.id.idUsuarioDeudor = :userId AND g.planOrigen.grupo.id = :grupoId AND r.pagado = false")
     BigDecimal sumCuotaDebeWhereDeudorIs(@Param("userId") Integer userId, @Param("grupoId") Integer grupoId);
 
-    @Query("SELECT r FROM RepartoDeuda r JOIN Gasto g ON r.id.idGasto = g.id WHERE r.id.idUsuarioDeudor = :userId AND g.planOrigen.grupo.id = :grupoId")
-    List<RepartoDeuda> findByUsuarioDeudorAndGrupo(@Param("userId") Integer userId, @Param("grupoId") Integer grupoId);
+    @Query("SELECT r FROM RepartoDeuda r JOIN Gasto g ON r.id.idGasto = g.id WHERE r.id.idUsuarioDeudor = :userId AND g.planOrigen.grupo.id = :grupoId AND g.pagador.id = :pagadorId")
+    List<RepartoDeuda> findByUsuarioDeudorAndGrupoAndPagador(@Param("userId") Integer userId, @Param("grupoId") Integer grupoId, @Param("pagadorId") Integer pagadorId);
 
 }
