@@ -67,11 +67,13 @@ public class ChatController {
     @MessageMapping("/chat/send/{grupoId}")
     public void sendMessage(
             @DestinationVariable Integer grupoId,
-            @Payload MensajeChatDTO payload
+            @Payload MensajeChatDTO payload,
+            java.security.Principal principal
     ) {
-        // 1. Obtener entidades
+        // El remitente se resuelve desde el JWT (no del payload, para evitar suplantación)
+        if (principal == null) return;
         Grupo grupo = grupoRepository.findById(grupoId).orElseThrow();
-        Usuario usuario = userService.obtenerPorId(payload.getIdUsuario());
+        Usuario usuario = userService.obtenerPorEmail(principal.getName());
         if (usuario == null) return;
 
         // 2. Verificar que el usuario pertenece al grupo
