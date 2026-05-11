@@ -22,6 +22,7 @@ import com.pagape.api.model.Usuario;
 import com.pagape.api.repository.GrupoRepository;
 import com.pagape.api.repository.MensajeChatRepository;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
+import com.pagape.api.service.FcmService;
 import com.pagape.api.service.UserService;
 
 @RestController
@@ -33,6 +34,7 @@ public class ChatController {
     @Autowired private GrupoRepository grupoRepository;
     @Autowired private UserService userService;
     @Autowired private PerfilUsuarioGrupoRepository perfilRepository;
+    @Autowired private FcmService fcmService;
 
     // ── REST: historial de mensajes (últimos 50) ──────────────────────────
     @GetMapping("/history/{grupoId}")
@@ -96,5 +98,10 @@ public class ChatController {
 
         // 5. Broadcast a todos los suscritos del grupo
         messagingTemplate.convertAndSend("/topic/chat/" + grupoId, respuesta);
+
+        // 6. Notificación push a los miembros que no están conectados
+        List<String> tokens = perfilRepository
+                .findFcmTokensDeGrupoExceptoEmisor(grupoId, usuario.getId());
+        fcmService.enviarNotificacionChat(tokens, usuario.getNombre(), payload.getTexto(), grupoId);
     }
 }

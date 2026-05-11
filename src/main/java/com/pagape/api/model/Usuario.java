@@ -40,6 +40,9 @@ public class Usuario {
     @Column(name = "contraseña_hash", length = 255)
     private String contraseñaHash;
 
+    @Column(name = "fcm_token", length = 255)
+    private String fcmToken;
+
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude // Importante para evitar bucles infinitos con Lombok
     private List<PerfilUsuarioGrupo> perfiles = new ArrayList<>();
