@@ -36,6 +36,7 @@ import com.pagape.api.repository.GastoRepository;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
 import com.pagape.api.repository.PlanRepository;
 import com.pagape.api.repository.RepartoDeudaRepository;
+import com.pagape.api.repository.VotoPlanRepository;
 import com.pagape.api.service.GastoService;
 import com.pagape.api.service.RepartoDeudaService;
 import com.pagape.api.service.UserService;
@@ -68,6 +69,9 @@ public class GastoController {
 
     @Autowired
     private PlanRepository planRepository;
+
+    @Autowired
+    private VotoPlanRepository votoPlanRepository;
 
     @PostMapping("/{idPlan}/new")
     public ResponseEntity<?> registrarGasto(
@@ -105,14 +109,20 @@ public class GastoController {
             // Lógica de división de deuda
             Integer idGrupo = nuevoGasto.getPlanOrigen().getGrupo().getId();
             List<PerfilUsuarioGrupo> miembros = perfilRepository.findByGrupoId(idGrupo);
+
+            // Excluir de la deuda a quienes votaron "En contra" en este plan
+            java.util.Set<Integer> votaronEnContra = votoPlanRepository.findIdUsuariosByIdPlanAndVoto(idPlan, "En contra");
+
             List<Usuario> deudores = miembros.stream()
                     .map(PerfilUsuarioGrupo::getUsuario)
                     .filter(u -> !u.getId().equals(pagador.getId()))
+                    .filter(u -> !votaronEnContra.contains(u.getId()))
                     .collect(Collectors.toList());
 
-            int totalMiembros = miembros.size();
-            if (totalMiembros > 0) {
-                BigDecimal cuota = importe.divide(BigDecimal.valueOf(totalMiembros), 2, RoundingMode.HALF_UP);
+            // El divisor son solo los participantes (sin el pagador y sin los "En contra")
+            int totalParticipantes = deudores.size() + 1; // +1 por el pagador
+            if (totalParticipantes > 1) {
+                BigDecimal cuota = importe.divide(BigDecimal.valueOf(totalParticipantes), 2, RoundingMode.HALF_UP);
                 for (Usuario deudor : deudores) {
                     RepartoDeuda reparto = new RepartoDeuda(nuevoGasto.getId(), deudor.getId(), cuota);
                     repartoDeudaRepository.save(reparto);
