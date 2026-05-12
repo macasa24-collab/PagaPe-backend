@@ -125,10 +125,6 @@ public class VotoPlanService {
             throw new RuntimeException("No tienes permiso para votar: no perteneces a este grupo.");
         }
 
-        if (plan.isVotacionCerrada()) {
-            throw new RuntimeException("La votación ya está cerrada.");
-        }
-
         VotoPlanId idId = new VotoPlanId(idPlan, usuario.getId());
         VotoPlan votoPlan = votoPlanRepository.findById(idId)
                 .orElseThrow(() -> new RuntimeException("No tienes un voto registrado en este plan."));
@@ -139,7 +135,9 @@ public class VotoPlanService {
         votoPlanRepository.save(votoPlan);
         votoPlanRepository.flush();
 
-        evaluarCierreDePlan(plan);
+        if (!plan.isVotacionCerrada()) {
+            evaluarCierreDePlan(plan);
+        }
 
         return nuevoVoto;
     }
