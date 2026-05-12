@@ -9,13 +9,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RepartoDeudaResponse {
+public class DeudaResumenResponse {
 
-    private Integer idGasto;
-    private Integer idUsuarioDeudor;
     private Integer idPagador;
     private String nombrePagador;
-    private String concepto;
-    private BigDecimal cuotaDebe;
-    private boolean pagado;
+    private BigDecimal totalDebido;
 }
