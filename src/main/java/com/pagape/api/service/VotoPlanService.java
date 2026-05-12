@@ -112,6 +112,38 @@ public class VotoPlanService {
         }
     }
 
+    @Transactional
+    public String toggleVoto(Integer idPlan, String emailUsuario) {
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado."));
+
+        Plan plan = planRepository.findById(idPlan)
+                .orElseThrow(() -> new RuntimeException("El plan no existe."));
+
+        boolean esMiembro = perfilRepository.existsByUsuarioAndGrupo(usuario, plan.getGrupo());
+        if (!esMiembro) {
+            throw new RuntimeException("No tienes permiso para votar: no perteneces a este grupo.");
+        }
+
+        if (plan.isVotacionCerrada()) {
+            throw new RuntimeException("La votación ya está cerrada.");
+        }
+
+        VotoPlanId idId = new VotoPlanId(idPlan, usuario.getId());
+        VotoPlan votoPlan = votoPlanRepository.findById(idId)
+                .orElseThrow(() -> new RuntimeException("No tienes un voto registrado en este plan."));
+
+        String votoActual = votoPlan.getVoto();
+        String nuevoVoto = votoActual.equals("A favor") ? "En contra" : "A favor";
+        votoPlan.setVoto(nuevoVoto);
+        votoPlanRepository.save(votoPlan);
+        votoPlanRepository.flush();
+
+        evaluarCierreDePlan(plan);
+
+        return nuevoVoto;
+    }
+
     public VotoEstadoResponse verificarVotoUsuario(Integer idPlan, String emailUsuario) {
         // 1. Validar si el plan existe
         Plan plan = planRepository.findById(idPlan)
