@@ -2,6 +2,7 @@ package com.pagape.api.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +18,9 @@ public interface PlanRepository extends JpaRepository<Plan, Integer> {
     List<Plan> findByGrupoId(Integer idGrupo);
 
     List<Plan> findByGrupoIdAndVotacionCerradaFalse(Integer idGrupo);
+
+    @Query("SELECT p FROM Plan p WHERE p.grupo.id = :idGrupo AND p.votacionCerrada = true AND p.denegado = false ORDER BY p.fechaPropuesta DESC")
+    List<Plan> findUltimoPlanAprobadoPorGrupo(@Param("idGrupo") Integer idGrupo);
 
     // Busca planes aceptados que caigan entre dos horas (timempo actual y fin del día)
     @Query("SELECT p FROM Plan p WHERE p.grupo.id = :idGrupo "

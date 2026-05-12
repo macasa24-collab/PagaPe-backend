@@ -73,10 +73,11 @@ public class GrupoController {
                     nuevoGrupo.getCodigoUnico(),
                     nuevoGrupo.getClaveAcceso(),
                     nuevoGrupo.isEsPremium(),
-                    true, // esAdmin (siempre true para el creador)
-                    BigDecimal.ZERO, // balanceActual
-                    0, // puntosKarma
-                    0 // contPlanesPropuestos
+                    true,
+                    BigDecimal.ZERO,
+                    0,
+                    0,
+                    null
             );
 
             return ResponseEntity.ok(respuesta); // Devolvemos el DTO limpio

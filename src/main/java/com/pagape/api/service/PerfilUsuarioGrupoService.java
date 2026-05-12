@@ -17,6 +17,7 @@ import com.pagape.api.model.Usuario;
 import com.pagape.api.model.auxiliar_id.PerfilUsuarioGrupoId;
 import com.pagape.api.repository.GrupoRepository;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
+import com.pagape.api.repository.PlanRepository;
 import com.pagape.api.repository.UserRepository;
 
 @Service
@@ -30,6 +31,9 @@ public class PerfilUsuarioGrupoService {
 
     @Autowired
     private GrupoRepository grupoRepository;
+
+    @Autowired
+    private PlanRepository planRepository;
 
     @Autowired
     private VotoPlanService votoPlanService;
@@ -117,17 +121,22 @@ public class PerfilUsuarioGrupoService {
         }
 
         // 2. Transformamos la lista de Entidades a lista de DTOs (GrupoResponse)
-        return perfiles.stream().map(perfil -> new GrupoResponse(
-                perfil.getGrupo().getId(),
-                perfil.getGrupo().getNombre(),
-                perfil.getGrupo().getCodigoUnico(),
-                perfil.getGrupo().getClaveAcceso(),
-                perfil.getGrupo().isEsPremium(),
-                perfil.isEsAdmin(),
-                perfil.getBalanceActual(),
-                perfil.getPuntosKarma(),
-                perfil.getContPlanesPropuestos()
-        )).collect(Collectors.toList());
+        return perfiles.stream().map(perfil -> {
+            List<com.pagape.api.model.Plan> planes = planRepository.findUltimoPlanAprobadoPorGrupo(perfil.getGrupo().getId());
+            java.time.LocalDateTime fechaUltimoPlan = planes.isEmpty() ? null : planes.get(0).getFechaPropuesta();
+            return new GrupoResponse(
+                    perfil.getGrupo().getId(),
+                    perfil.getGrupo().getNombre(),
+                    perfil.getGrupo().getCodigoUnico(),
+                    perfil.getGrupo().getClaveAcceso(),
+                    perfil.getGrupo().isEsPremium(),
+                    perfil.isEsAdmin(),
+                    perfil.getBalanceActual(),
+                    perfil.getPuntosKarma(),
+                    perfil.getContPlanesPropuestos(),
+                    fechaUltimoPlan
+            );
+        }).collect(Collectors.toList());
     }
 
     public List<MiembroResponse> listarMiembrosGrupo(Integer grupoId) {

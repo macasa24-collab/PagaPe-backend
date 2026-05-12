@@ -1,6 +1,7 @@
 package com.pagape.api.dto.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,4 +19,5 @@ public class GrupoResponse {
     private BigDecimal balanceActual;
     private Integer puntosKarma;
     private Integer contPlanesPropuestos;
+    private LocalDateTime fechaUltimoPlan;
 }
