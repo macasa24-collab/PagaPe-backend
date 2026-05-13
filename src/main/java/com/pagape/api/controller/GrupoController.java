@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -196,6 +197,39 @@ public class GrupoController {
         }
     }
 
+    @PutMapping("/{grupoId}")
+    public ResponseEntity<?> editarGrupo(
+            @PathVariable Integer grupoId,
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            Usuario usuario = userService.obtenerPorEmail(email);
+
+            boolean esAdmin = perfilRepository.existsByIdIdUsuarioAndIdIdGrupoAndEsAdminTrue(usuario.getId(), grupoId);
+            if (!esAdmin) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("mensaje", "Solo el administrador puede editar el grupo"));
+            }
+
+            Grupo grupo = grupoRepository.findById(grupoId).orElse(null);
+            if (grupo == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Grupo no encontrado"));
+            }
+
+            String nombre = body.get("nombre");
+            if (nombre != null && !nombre.isBlank()) {
+                grupo.setNombre(nombre.trim());
+            }
+
+            grupoRepository.save(grupo);
+            return ResponseEntity.ok(Map.of("message", "ok"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("mensaje", "Error al editar grupo: " + e.getMessage()));
+        }
+    }
+
     @PostMapping("/{grupoId}/image")
     public ResponseEntity<?> subirImagenGrupo(
             @PathVariable Integer grupoId,
@@ -205,10 +239,10 @@ public class GrupoController {
             String email = authentication.getName();
             Usuario usuario = userService.obtenerPorEmail(email);
 
-            boolean esMiembro = perfilRepository.existsByIdIdUsuarioAndIdIdGrupo(usuario.getId(), grupoId);
-            if (!esMiembro) {
+            boolean esAdmin = perfilRepository.existsByIdIdUsuarioAndIdIdGrupoAndEsAdminTrue(usuario.getId(), grupoId);
+            if (!esAdmin) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("mensaje", "No tienes permiso para modificar este grupo"));
+                        .body(Map.of("mensaje", "Solo el administrador puede cambiar la imagen del grupo"));
             }
 
             Grupo grupo = grupoRepository.findById(grupoId).orElse(null);

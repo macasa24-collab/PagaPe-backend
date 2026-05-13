@@ -27,6 +27,8 @@ public interface PerfilUsuarioGrupoRepository extends JpaRepository<PerfilUsuari
     // Usando la navegación de Spring Data sobre tu PK compuesta
     boolean existsByIdIdUsuarioAndIdIdGrupo(Integer idUsuario, Integer idGrupo);
 
+    boolean existsByIdIdUsuarioAndIdIdGrupoAndEsAdminTrue(Integer idUsuario, Integer idGrupo);
+
     // --- Consultas de Listado y Conteo ---
     long countByIdIdGrupo(Integer idGrupo);
 
