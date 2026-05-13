@@ -60,16 +60,11 @@ public class UserController {
         }
 
         String nombre = body.get("nombre");
-        String email = body.get("email");
 
+        // El email no se puede cambiar: está firmado dentro del JWT y cambiarlo
+        // invalida todas las sesiones activas del usuario.
         if (nombre != null && !nombre.isBlank()) {
             usuario.setNombre(nombre.trim());
-        }
-        if (email != null && !email.isBlank() && !email.equals(usuario.getEmail())) {
-            if (userRepository.findByEmail(email.trim()).isPresent()) {
-                return ResponseEntity.badRequest().body(Map.of("mensaje", "El email ya está en uso"));
-            }
-            usuario.setEmail(email.trim());
         }
 
         userRepository.save(usuario);
