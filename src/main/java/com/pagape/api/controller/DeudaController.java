@@ -82,7 +82,14 @@ public class DeudaController {
             }
 
             // Buscar todas las deudas donde el usuario autenticado es deudor en ese grupo hacia el pagador especificado
+            System.out.println("[my-debts] userId=" + usuarioAutenticado.getId() + " groupId=" + groupId + " pagadorId=" + pagadorId);
+
             List<RepartoDeuda> deudas = repartoDeudaRepository.findByUsuarioDeudorAndGrupoAndPagador(usuarioAutenticado.getId(), groupId, pagadorId);
+
+            System.out.println("[my-debts] deudas encontradas: " + deudas.size());
+            for (RepartoDeuda d : deudas) {
+                System.out.println("  idGasto=" + d.getId().getIdGasto() + " cuota=" + d.getCuotaDebe() + " pagado=" + d.isPagado());
+            }
 
             List<RepartoDeudaResponse> response = deudas.stream()
                     .map(d -> {
@@ -101,6 +108,7 @@ public class DeudaController {
                     })
                     .collect(Collectors.toList());
 
+            System.out.println("[my-debts] response enviada: " + response);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -165,8 +173,15 @@ public class DeudaController {
                         .body("No eres miembro de este grupo.");
             }
 
+            System.out.println("[summary] userId=" + usuarioAutenticado.getId() + " groupId=" + groupId);
+
             List<RepartoDeuda> deudas = repartoDeudaRepository
                     .findDeudaPendientesByDeudorAndGrupo(usuarioAutenticado.getId(), groupId);
+
+            System.out.println("[summary] deudas encontradas: " + deudas.size());
+            for (RepartoDeuda d : deudas) {
+                System.out.println("  idGasto=" + d.getId().getIdGasto() + " cuota=" + d.getCuotaDebe() + " pagado=" + d.isPagado());
+            }
 
             Map<Integer, DeudaResumenResponse> resumenMap = new LinkedHashMap<>();
             for (RepartoDeuda d : deudas) {
@@ -182,6 +197,7 @@ public class DeudaController {
                         });
             }
 
+            System.out.println("[summary] resumen enviado: " + resumenMap.values());
             return ResponseEntity.ok(resumenMap.values());
 
         } catch (Exception e) {
