@@ -34,7 +34,7 @@ public class Usuario {
     @Column(name = "numero_tokens", columnDefinition = "INT DEFAULT 0")
     private int numTokens;
 
-    @Column(name = "url_foto_perfil", length = 255)
+    @Column(name = "url_foto_perfil", length = 500)
     private String urlFotoPerfil;
 
     @Column(name = "contraseña_hash", length = 255)

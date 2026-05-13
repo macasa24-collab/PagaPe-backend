@@ -11,7 +11,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     @Value("${storage.location}")
-    private String storageLocation; // Aquí llega "/var/pagape/uploads/gastos"
+    private String storageLocation;
+
+    @Value("${storage.avatars.location}")
+    private String avatarsLocation;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
