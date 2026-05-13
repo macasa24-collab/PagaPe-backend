@@ -22,6 +22,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         // WebSocket handshake y SockJS deben ser públicos
                         .requestMatchers("/ws/chat/**").permitAll()
+                        // Archivos estáticos de avatares e imágenes de grupo — públicos
+                        .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
