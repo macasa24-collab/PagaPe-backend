@@ -44,43 +44,38 @@ public class PerfilUsuarioGrupoService {
 
     // Método útil para cuando alguien se une a un grupo
     public String unirseAGrupo(Integer usuarioId, String codigoGrupo, String passwordIngresada) {
-        // 1. ¿Existe el usuario?
-        Optional<Usuario> usuarioOpt = userRepository.findById(usuarioId);
-        if (usuarioOpt.isEmpty()) {
-            return "Error: Usuario no encontrado.";
+        try {
+            unirseAGrupoConRespuesta(usuarioId, codigoGrupo, passwordIngresada);
+            return "Éxito";
+        } catch (RuntimeException e) {
+            return "Error: " + e.getMessage();
         }
+    }
 
-        // 2. ¿Existe el grupo por ese código?
+    public Grupo unirseAGrupoConRespuesta(Integer usuarioId, String codigoGrupo, String passwordIngresada) {
+        Optional<Usuario> usuarioOpt = userRepository.findById(usuarioId);
+        if (usuarioOpt.isEmpty()) throw new RuntimeException("Usuario no encontrado.");
+
         Optional<Grupo> grupoOpt = grupoRepository.findByCodigoUnico(codigoGrupo);
-        if (grupoOpt.isEmpty()) {
-            return "Error: El código de grupo no existe.";
-        }
+        if (grupoOpt.isEmpty()) throw new RuntimeException("El código de grupo no existe.");
 
         Usuario usuario = usuarioOpt.get();
         Grupo grupo = grupoOpt.get();
 
-        // 3. VERIFICACIÓN DE CONTRASEÑA
-        // Comparamos la contraseña ingresada con la que tiene el grupo en la DB
-        if (!grupo.getClaveAcceso().equals(passwordIngresada)) {
-            return "Error: Contraseña de grupo incorrecta.";
-        }
+        if (!grupo.getClaveAcceso().equals(passwordIngresada))
+            throw new RuntimeException("Contraseña de grupo incorrecta.");
 
-        // 4. ¿Ya pertenece al grupo?
-        Optional<PerfilUsuarioGrupo> perfilExistente = perfilRepository.findById(new PerfilUsuarioGrupoId(usuario.getId(), grupo.getId()));
-        if (perfilExistente.isPresent()) {
-            return "Error: Ya eres miembro de este grupo.";
-        }
+        Optional<PerfilUsuarioGrupo> perfilExistente = perfilRepository
+                .findById(new PerfilUsuarioGrupoId(usuario.getId(), grupo.getId()));
+        if (perfilExistente.isPresent()) throw new RuntimeException("Ya eres miembro de este grupo.");
 
-        // 5. Lógica de Administrador Automático
         long cantidadMiembros = perfilRepository.countByIdIdGrupo(grupo.getId());
-
         PerfilUsuarioGrupo nuevoPerfil = new PerfilUsuarioGrupo(usuario, grupo);
         nuevoPerfil.setBalanceActual(BigDecimal.ZERO);
-        nuevoPerfil.setEsAdmin(cantidadMiembros == 0); // true si es el primero
-
+        nuevoPerfil.setEsAdmin(cantidadMiembros == 0);
         perfilRepository.save(nuevoPerfil);
 
-        return "Éxito: Te has unido a '" + grupo.getNombre() + "' como " + (nuevoPerfil.isEsAdmin() ? "ADMIN" : "MIEMBRO");
+        return grupo;
     }
 
     public String salirDelGrupo(Integer usuarioId, Integer grupoId) {
@@ -134,7 +129,8 @@ public class PerfilUsuarioGrupoService {
                     perfil.getBalanceActual(),
                     perfil.getPuntosKarma(),
                     perfil.getContPlanesPropuestos(),
-                    fechaUltimoPlan
+                    fechaUltimoPlan,
+                    perfil.getGrupo().getUrlFotoGrupo()
             );
         }).collect(Collectors.toList());
     }

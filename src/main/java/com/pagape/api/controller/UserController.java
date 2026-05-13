@@ -1,27 +1,40 @@
 package com.pagape.api.controller;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.pagape.api.model.Usuario;
 import com.pagape.api.repository.UserRepository;
 import com.pagape.api.service.UserService;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
+    @Value("${storage.location}")
+    private String storageLocation;
+
     @Autowired private UserService userService;
     @Autowired private UserRepository userRepository;
 
-    // El frontend llama a este endpoint tras el login para registrar su token FCM
     @PutMapping("/fcm-token")
     public ResponseEntity<?> actualizarFcmToken(
             @RequestBody Map<String, String> body,
@@ -40,5 +53,75 @@ public class UserController {
         usuario.setFcmToken(fcmToken);
         userRepository.save(usuario);
         return ResponseEntity.ok("Token FCM actualizado");
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> obtenerPerfil(Authentication auth) {
+        Usuario usuario = userService.obtenerPorEmail(auth.getName());
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Usuario no encontrado"));
+        }
+        return ResponseEntity.ok(Map.of(
+                "id", usuario.getId(),
+                "nombre", usuario.getNombre() != null ? usuario.getNombre() : "",
+                "email", usuario.getEmail(),
+                "avatarUrl", usuario.getUrlFotoPerfil() != null ? usuario.getUrlFotoPerfil() : ""
+        ));
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> actualizarPerfil(
+            @RequestBody Map<String, String> body,
+            Authentication auth) {
+
+        Usuario usuario = userService.obtenerPorEmail(auth.getName());
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Usuario no encontrado"));
+        }
+
+        String nombre = body.get("nombre");
+        String email = body.get("email");
+
+        if (nombre != null && !nombre.isBlank()) {
+            usuario.setNombre(nombre.trim());
+        }
+        if (email != null && !email.isBlank() && !email.equals(usuario.getEmail())) {
+            if (userRepository.findByEmail(email.trim()).isPresent()) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "El email ya está en uso"));
+            }
+            usuario.setEmail(email.trim());
+        }
+
+        userRepository.save(usuario);
+        return ResponseEntity.ok(Map.of("message", "ok"));
+    }
+
+    @PostMapping("/avatar")
+    public ResponseEntity<?> subirAvatar(
+            @RequestParam("avatar") MultipartFile file,
+            Authentication auth) {
+        try {
+            Usuario usuario = userService.obtenerPorEmail(auth.getName());
+            if (usuario == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Usuario no encontrado"));
+            }
+
+            Path dir = Paths.get(storageLocation).getParent().resolve("avatars");
+            Files.createDirectories(dir);
+            String ext = file.getOriginalFilename() != null && file.getOriginalFilename().contains(".")
+                    ? file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.'))
+                    : ".jpg";
+            String filename = "avatar_" + usuario.getId() + "_" + UUID.randomUUID().toString().substring(0, 8) + ext;
+            Files.copy(file.getInputStream(), dir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+
+            String url = "https://pagape-api.duckdns.org/uploads/avatars/" + filename;
+            usuario.setUrlFotoPerfil(url);
+            userRepository.save(usuario);
+
+            return ResponseEntity.ok(Map.of("avatarUrl", url));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("mensaje", "Error al subir avatar: " + e.getMessage()));
+        }
     }
 }

@@ -1,10 +1,16 @@
 package com.pagape.api.controller;
 
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -13,7 +19,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.pagape.api.dto.request.GrupoRequest;
 import com.pagape.api.dto.request.JoinGrupoRequest;
@@ -21,6 +29,7 @@ import com.pagape.api.dto.response.GrupoResponse;
 import com.pagape.api.dto.response.MiembroResponse;
 import com.pagape.api.model.Grupo;
 import com.pagape.api.model.Usuario;
+import com.pagape.api.repository.GrupoRepository;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
 import com.pagape.api.service.GrupoService;
 import com.pagape.api.service.PerfilUsuarioGrupoService;
@@ -29,6 +38,9 @@ import com.pagape.api.service.UserService;
 @RestController
 @RequestMapping("/groups")
 public class GrupoController {
+
+    @Value("${storage.location}")
+    private String storageLocation;
 
     @Autowired
     private GrupoService grupoService;
@@ -41,6 +53,9 @@ public class GrupoController {
 
     @Autowired
     private PerfilUsuarioGrupoRepository perfilRepository;
+
+    @Autowired
+    private GrupoRepository grupoRepository;
 
     @PostMapping("/create")
     public ResponseEntity<?> crearGrupo(@RequestBody GrupoRequest request, Authentication authentication) {
@@ -125,24 +140,33 @@ public class GrupoController {
     @PostMapping("/join")
     public ResponseEntity<?> unirseAGrupo(@RequestBody JoinGrupoRequest request, Authentication authentication) {
         try {
-            // 1. Obtener el usuario autenticado
             String email = authentication.getName();
             Usuario usuario = userService.obtenerPorEmail(email);
 
-            // 2. Llamar al servicio que ya tienes programado
-            String resultado = perfilService.unirseAGrupo(
+            Grupo grupo = perfilService.unirseAGrupoConRespuesta(
                     usuario.getId(),
                     request.getCodigoUnico(),
                     request.getClave()
             );
 
-            // 3. Manejar la respuesta según lo que devuelve tu Service
-            if (resultado.startsWith("Error")) {
-                return ResponseEntity.badRequest().body(Map.of("mensaje", resultado));
-            }
+            GrupoResponse respuesta = new GrupoResponse(
+                    grupo.getId(),
+                    grupo.getNombre(),
+                    grupo.getCodigoUnico(),
+                    grupo.getClaveAcceso(),
+                    grupo.isEsPremium(),
+                    false,
+                    BigDecimal.ZERO,
+                    0,
+                    0,
+                    null,
+                    grupo.getUrlFotoGrupo()
+            );
 
-            return ResponseEntity.ok(Map.of("mensaje", resultado));
+            return ResponseEntity.ok(respuesta);
 
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("mensaje", "No se pudo unir al grupo"));
         }
@@ -167,6 +191,45 @@ public class GrupoController {
             return ResponseEntity.ok(Map.of("mensaje", resultado));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("mensaje", "No se pudo procesar la salida del grupo"));
+        }
+    }
+
+    @PostMapping("/{grupoId}/image")
+    public ResponseEntity<?> subirImagenGrupo(
+            @PathVariable Integer grupoId,
+            @RequestParam("image") MultipartFile file,
+            Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            Usuario usuario = userService.obtenerPorEmail(email);
+
+            boolean esMiembro = perfilRepository.existsByIdIdUsuarioAndIdIdGrupo(usuario.getId(), grupoId);
+            if (!esMiembro) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("mensaje", "No tienes permiso para modificar este grupo"));
+            }
+
+            Grupo grupo = grupoRepository.findById(grupoId).orElse(null);
+            if (grupo == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Grupo no encontrado"));
+            }
+
+            Path dir = Paths.get(storageLocation).getParent().resolve("grupos");
+            Files.createDirectories(dir);
+            String ext = file.getOriginalFilename() != null && file.getOriginalFilename().contains(".")
+                    ? file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.'))
+                    : ".jpg";
+            String filename = "group_" + grupoId + "_" + UUID.randomUUID().toString().substring(0, 8) + ext;
+            Files.copy(file.getInputStream(), dir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+
+            String url = "https://pagape-api.duckdns.org/uploads/grupos/" + filename;
+            grupo.setUrlFotoGrupo(url);
+            grupoRepository.save(grupo);
+
+            return ResponseEntity.ok(Map.of("imageUrl", url));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("mensaje", "Error al subir imagen: " + e.getMessage()));
         }
     }
 
