@@ -49,7 +49,7 @@ public class Grupo {
     @Column(name = "fecha_fin_premium")
     private LocalDate fechaFinPremium;
 
-    @Column(name = "url_foto_grupo", length = 255)
+    @Column(name = "url_foto_grupo", length = 500)
     private String urlFotoGrupo;
 
     public Grupo(String nombre, String codigoUnico, String claveAcceso) {

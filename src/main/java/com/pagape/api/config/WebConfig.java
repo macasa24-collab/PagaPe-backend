@@ -9,15 +9,17 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     @Value("${storage.location}")
-    private String storageLocation; // Aquí llega "/var/pagape/uploads/gastos"
+    private String storageLocation;
+
+    @Value("${storage.avatars.location}")
+    private String avatarsLocation;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 1. EL MANEJADOR (URL)
-        // Le dice a Spring: "Si llega una petición que empiece por /uploads/gastos/..."
         registry.addResourceHandler("/uploads/gastos/**")
-                // 2. LA UBICACIÓN FÍSICA (SISTEMA DE ARCHIVOS)
-                // "... vete a buscarlo a la ruta física: file:/var/pagape/uploads/gastos/"
                 .addResourceLocations("file:" + storageLocation + "/");
+
+        registry.addResourceHandler("/uploads/avatars/**")
+                .addResourceLocations("file:" + avatarsLocation + "/");
     }
 }

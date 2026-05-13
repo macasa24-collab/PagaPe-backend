@@ -95,7 +95,8 @@ public class GastoController {
             UsuarioResponse pagadorResponse = new UsuarioResponse(
                     pagador.getId(),
                     pagador.getNombre(),
-                    pagador.getEmail()
+                    pagador.getEmail(),
+                    pagador.getUrlFotoPerfil()
             );
             GastoResponse gastoResponse = new GastoResponse(
                     nuevoGasto.getId(),
@@ -172,7 +173,8 @@ public class GastoController {
                 UsuarioResponse pagadorResponse = new UsuarioResponse(
                         gasto.getPagador().getId(),
                         gasto.getPagador().getNombre(),
-                        gasto.getPagador().getEmail()
+                        gasto.getPagador().getEmail(),
+                        gasto.getPagador().getUrlFotoPerfil()
                 );
                 return new GastoResponse(
                         gasto.getId(),
@@ -255,7 +257,8 @@ public class GastoController {
             UsuarioResponse pagadorResponse = new UsuarioResponse(
                     pagador.getId(),
                     pagador.getNombre(),
-                    pagador.getEmail()
+                    pagador.getEmail(),
+                    pagador.getUrlFotoPerfil()
             );
             GastoResponse gastoResponse = new GastoResponse(
                     nuevoGasto.getId(),

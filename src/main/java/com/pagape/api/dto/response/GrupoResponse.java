@@ -20,4 +20,5 @@ public class GrupoResponse {
     private Integer puntosKarma;
     private Integer contPlanesPropuestos;
     private LocalDateTime fechaUltimoPlan;
+    private String avatarUrl;
 }

@@ -134,7 +134,8 @@ public class PerfilUsuarioGrupoService {
                     perfil.getBalanceActual(),
                     perfil.getPuntosKarma(),
                     perfil.getContPlanesPropuestos(),
-                    fechaUltimoPlan
+                    fechaUltimoPlan,
+                    perfil.getGrupo().getUrlFotoGrupo()
             );
         }).collect(Collectors.toList());
     }

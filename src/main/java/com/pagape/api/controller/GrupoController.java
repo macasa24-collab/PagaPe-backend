@@ -13,15 +13,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.pagape.api.dto.request.GrupoRequest;
 import com.pagape.api.dto.request.JoinGrupoRequest;
 import com.pagape.api.dto.response.GrupoResponse;
 import com.pagape.api.dto.response.MiembroResponse;
 import com.pagape.api.model.Grupo;
+import com.pagape.api.model.PerfilUsuarioGrupo;
 import com.pagape.api.model.Usuario;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
+import com.pagape.api.service.AvatarService;
 import com.pagape.api.service.GrupoService;
 import com.pagape.api.service.PerfilUsuarioGrupoService;
 import com.pagape.api.service.UserService;
@@ -41,6 +45,9 @@ public class GrupoController {
 
     @Autowired
     private PerfilUsuarioGrupoRepository perfilRepository;
+
+    @Autowired
+    private AvatarService avatarService;
 
     @PostMapping("/create")
     public ResponseEntity<?> crearGrupo(@RequestBody GrupoRequest request, Authentication authentication) {
@@ -77,7 +84,8 @@ public class GrupoController {
                     BigDecimal.ZERO,
                     0,
                     0,
-                    null
+                    null,
+                    nuevoGrupo.getUrlFotoGrupo()
             );
 
             return ResponseEntity.ok(respuesta); // Devolvemos el DTO limpio
@@ -193,6 +201,39 @@ public class GrupoController {
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("mensaje", "Error al validar acceso"));
+        }
+    }
+
+    @PostMapping(value = "/{groupId}/avatar", consumes = "multipart/form-data")
+    public ResponseEntity<?> subirAvatarGrupo(
+            @PathVariable Integer groupId,
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+        try {
+            String email = authentication.getName();
+            Usuario usuario = userService.obtenerPorEmail(email);
+            if (usuario == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Usuario no encontrado"));
+            }
+
+            PerfilUsuarioGrupo perfil = perfilRepository.findByIdsDirectos(usuario.getId(), groupId)
+                    .orElse(null);
+            if (perfil == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("mensaje", "No perteneces a este grupo"));
+            }
+            if (!perfil.isEsAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("mensaje", "Solo el administrador puede cambiar el avatar del grupo"));
+            }
+
+            String url = avatarService.subirAvatarGrupo(groupId, file);
+            return ResponseEntity.ok(Map.of("avatarUrl", url));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("mensaje", "Error al subir el avatar"));
         }
     }
 }
