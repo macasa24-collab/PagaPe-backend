@@ -32,7 +32,6 @@ import com.pagape.api.model.PerfilUsuarioGrupo;
 import com.pagape.api.model.Usuario;
 import com.pagape.api.repository.GrupoRepository;
 import com.pagape.api.repository.PerfilUsuarioGrupoRepository;
-import com.pagape.api.service.AvatarService;
 import com.pagape.api.service.GrupoService;
 import com.pagape.api.service.PerfilUsuarioGrupoService;
 import com.pagape.api.service.UserService;
@@ -217,11 +216,13 @@ public class GrupoController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Grupo no encontrado"));
             }
 
-            Path dir = Paths.get(storageLocation).getParent().resolve("grupos");
+            Path uploadsBase = Paths.get(storageLocation).getParent();
+            if (uploadsBase == null) uploadsBase = Paths.get(storageLocation);
+            Path dir = uploadsBase.resolve("grupos");
             Files.createDirectories(dir);
-            String ext = file.getOriginalFilename() != null && file.getOriginalFilename().contains(".")
-                    ? file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.'))
-                    : ".jpg";
+            String originalName = file.getOriginalFilename();
+            int dotIdx = originalName != null ? originalName.lastIndexOf('.') : -1;
+            String ext = dotIdx >= 0 ? originalName.substring(dotIdx) : ".jpg";
             String filename = "group_" + grupoId + "_" + UUID.randomUUID().toString().substring(0, 8) + ext;
             Files.copy(file.getInputStream(), dir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
 
@@ -262,36 +263,4 @@ public class GrupoController {
         }
     }
 
-    @PostMapping(value = "/{groupId}/avatar", consumes = "multipart/form-data")
-    public ResponseEntity<?> subirAvatarGrupo(
-            @PathVariable Integer groupId,
-            @RequestParam("file") MultipartFile file,
-            Authentication authentication) {
-        try {
-            String email = authentication.getName();
-            Usuario usuario = userService.obtenerPorEmail(email);
-            if (usuario == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Usuario no encontrado"));
-            }
-
-            PerfilUsuarioGrupo perfil = perfilRepository.findByIdsDirectos(usuario.getId(), groupId)
-                    .orElse(null);
-            if (perfil == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("mensaje", "No perteneces a este grupo"));
-            }
-            if (!perfil.isEsAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("mensaje", "Solo el administrador puede cambiar el avatar del grupo"));
-            }
-
-            String url = avatarService.subirAvatarGrupo(groupId, file);
-            return ResponseEntity.ok(Map.of("avatarUrl", url));
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("mensaje", "Error al subir el avatar"));
-        }
-    }
 }

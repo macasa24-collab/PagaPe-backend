@@ -13,9 +13,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${storage.location}")
     private String storageLocation;
 
-    @Value("${storage.avatars.location}")
-    private String avatarsLocation;
-
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         String uploadsBase = Paths.get(storageLocation).getParent().toString();

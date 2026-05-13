@@ -21,10 +21,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.pagape.api.dto.response.UsuarioResponse;
 import com.pagape.api.model.Usuario;
 import com.pagape.api.repository.UserRepository;
-import com.pagape.api.service.AvatarService;
 import com.pagape.api.service.UserService;
 
 @RestController
@@ -36,59 +34,6 @@ public class UserController {
 
     @Autowired private UserService userService;
     @Autowired private UserRepository userRepository;
-    @Autowired private AvatarService avatarService;
-
-    @GetMapping("/me")
-    public ResponseEntity<?> obtenerPerfil(Authentication auth) {
-        Usuario usuario = userService.obtenerPorEmail(auth.getName());
-        if (usuario == null) {
-            return ResponseEntity.status(404).body("Usuario no encontrado");
-        }
-        return ResponseEntity.ok(new UsuarioResponse(
-                usuario.getId(),
-                usuario.getNombre(),
-                usuario.getEmail(),
-                usuario.getUrlFotoPerfil()
-        ));
-    }
-
-    @PostMapping(value = "/avatar", consumes = "multipart/form-data")
-    public ResponseEntity<?> subirAvatar(
-            @RequestParam("file") MultipartFile file,
-            Authentication auth) {
-        try {
-            Usuario usuario = userService.obtenerPorEmail(auth.getName());
-            if (usuario == null) {
-                return ResponseEntity.status(404).body("Usuario no encontrado");
-            }
-            String url = avatarService.subirAvatarUsuario(usuario.getId(), file);
-            return ResponseEntity.ok(Map.of("avatarUrl", url));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("mensaje", "Error al subir el avatar"));
-        }
-    }
-
-    @PutMapping("/fcm-token")
-    public ResponseEntity<?> actualizarFcmToken(
-            @RequestBody Map<String, String> body,
-            Authentication auth) {
-
-        String fcmToken = body.get("fcmToken");
-        if (fcmToken == null || fcmToken.isBlank()) {
-            return ResponseEntity.badRequest().body("fcmToken requerido");
-        }
-
-        Usuario usuario = userService.obtenerPorEmail(auth.getName());
-        if (usuario == null) {
-            return ResponseEntity.status(404).body("Usuario no encontrado");
-        }
-
-        usuario.setFcmToken(fcmToken);
-        userRepository.save(usuario);
-        return ResponseEntity.ok("Token FCM actualizado");
-    }
 
     @GetMapping("/me")
     public ResponseEntity<?> obtenerPerfil(Authentication auth) {
@@ -131,7 +76,7 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "ok"));
     }
 
-    @PostMapping("/avatar")
+    @PostMapping(value = "/avatar", consumes = "multipart/form-data")
     public ResponseEntity<?> subirAvatar(
             @RequestParam("avatar") MultipartFile file,
             Authentication auth) {
@@ -141,11 +86,13 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Usuario no encontrado"));
             }
 
-            Path dir = Paths.get(storageLocation).getParent().resolve("avatars");
+            Path uploadsBase = Paths.get(storageLocation).getParent();
+            if (uploadsBase == null) uploadsBase = Paths.get(storageLocation);
+            Path dir = uploadsBase.resolve("avatars");
             Files.createDirectories(dir);
-            String ext = file.getOriginalFilename() != null && file.getOriginalFilename().contains(".")
-                    ? file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.'))
-                    : ".jpg";
+            String originalName = file.getOriginalFilename();
+            int dotIdx = originalName != null ? originalName.lastIndexOf('.') : -1;
+            String ext = dotIdx >= 0 ? originalName.substring(dotIdx) : ".jpg";
             String filename = "avatar_" + usuario.getId() + "_" + UUID.randomUUID().toString().substring(0, 8) + ext;
             Files.copy(file.getInputStream(), dir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
 
@@ -158,5 +105,25 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("mensaje", "Error al subir avatar: " + e.getMessage()));
         }
+    }
+
+    @PutMapping("/fcm-token")
+    public ResponseEntity<?> actualizarFcmToken(
+            @RequestBody Map<String, String> body,
+            Authentication auth) {
+
+        String fcmToken = body.get("fcmToken");
+        if (fcmToken == null || fcmToken.isBlank()) {
+            return ResponseEntity.badRequest().body("fcmToken requerido");
+        }
+
+        Usuario usuario = userService.obtenerPorEmail(auth.getName());
+        if (usuario == null) {
+            return ResponseEntity.status(404).body("Usuario no encontrado");
+        }
+
+        usuario.setFcmToken(fcmToken);
+        userRepository.save(usuario);
+        return ResponseEntity.ok("Token FCM actualizado");
     }
 }
