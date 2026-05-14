@@ -29,6 +29,8 @@ public class VotoPlanService {
     private UserRepository usuarioRepository;
     @Autowired
     private PerfilUsuarioGrupoRepository perfilRepository;
+    @Autowired
+    private FcmService fcmService;
 
     @Transactional
     public void registrarVoto(VotoPlanRequest request, String emailUsuario) {
@@ -109,6 +111,18 @@ public class VotoPlanService {
             plan.setVotacionCerrada(true);
             plan.setDenegado(esDenegado);
             planRepository.save(plan);
+
+            if (!esDenegado) {
+                List<String> tokens = perfilRepository.findFcmTokensByGrupoId(plan.getGrupo().getId());
+                String fecha = plan.getFechaPropuesta().toLocalDate().toString();
+                fcmService.enviarNotificacionPlanAceptado(
+                        tokens,
+                        plan.getTitulo(),
+                        fecha,
+                        plan.getGrupo().getNombre(),
+                        plan.getGrupo().getId()
+                );
+            }
         }
     }
 
