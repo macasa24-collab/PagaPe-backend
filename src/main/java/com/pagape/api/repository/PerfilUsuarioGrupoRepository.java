@@ -49,4 +49,9 @@ public interface PerfilUsuarioGrupoRepository extends JpaRepository<PerfilUsuari
     List<String> findFcmTokensDeGrupoExceptoEmisor(
             @Param("grupoId") Integer grupoId,
             @Param("emisorId") Integer emisorId);
+
+    @Query("SELECT p.usuario.fcmToken FROM PerfilUsuarioGrupo p " +
+           "WHERE p.grupo.id = :grupoId " +
+           "AND p.usuario.fcmToken IS NOT NULL")
+    List<String> findFcmTokensByGrupoId(@Param("grupoId") Integer grupoId);
 }

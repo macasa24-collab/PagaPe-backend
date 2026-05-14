@@ -35,4 +35,29 @@ public class FcmService {
             log.error("Error enviando notificación FCM: {}", e.getMessage());
         }
     }
+
+    public void enviarNotificacionPlanAceptado(List<String> tokens, String tituloPlan,
+                                               String fechaPlan, String nombreGrupo,
+                                               Integer grupoId) {
+        if (tokens.isEmpty()) return;
+
+        MulticastMessage message = MulticastMessage.builder()
+                .setNotification(Notification.builder()
+                        .setTitle("✅ Plan aceptado en " + nombreGrupo)
+                        .setBody("\"" + tituloPlan + "\" — " + fechaPlan)
+                        .build())
+                .putData("tipo",        "PLAN_ACEPTADO")
+                .putData("grupoId",     grupoId.toString())
+                .putData("tituloPlan",  tituloPlan)
+                .putData("fechaPlan",   fechaPlan)
+                .putData("nombreGrupo", nombreGrupo)
+                .addAllTokens(tokens)
+                .build();
+
+        try {
+            FirebaseMessaging.getInstance().sendEachForMulticast(message);
+        } catch (Exception e) {
+            log.error("Error enviando notificación plan aceptado: {}", e.getMessage());
+        }
+    }
 }
