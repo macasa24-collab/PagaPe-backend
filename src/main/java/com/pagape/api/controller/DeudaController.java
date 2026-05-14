@@ -54,9 +54,9 @@ public class DeudaController {
     private LiquidacionService liquidacionService;
 
     /**
-     * Devuelve las deudas del usuario autenticado dentro de un grupo
-     * específico hacia un pagador específico. El usuario se toma del token JWT en Authentication, no de la
-     * URL.
+     * Devuelve las deudas del usuario autenticado dentro de un grupo específico
+     * hacia un pagador específico. El usuario se toma del token JWT en
+     * Authentication, no de la URL.
      */
     @GetMapping("/my-debts/{groupId}")
     public ResponseEntity<?> obtenerDeudasUsuarioEnGrupo(
@@ -117,8 +117,17 @@ public class DeudaController {
         }
     }
 
+    /* POST /debts/pay
+        Crea una única liquidación a partir de uno o varios gastos enviados por
+        el frontend. Los gastos deben pertenecer al mismo grupo y tener el mismo
+        pagador original. Una vez generada la liquidación correctamente, todos
+        los gastos quedan marcados como pagados.
+
+        Body esperado: { "idsGastos": [1, 2, 3], "concepto": "Te pago lo de la
+        cena y el taxi", "metodoPago": "BIZUM" }
+     */
     @PostMapping("/pay")
-    public ResponseEntity<?> pagarDeudaIndividual(
+    public ResponseEntity<?> pagarDeudas(
             @RequestBody LiquidacionRequest request,
             Authentication authentication) {
         try {
@@ -131,7 +140,7 @@ public class DeudaController {
             }
 
             Liquidacion liquidacion = liquidacionService.registrarPagoDeuda(
-                    request.getIdGasto(),
+                    request.getIdsGastos(),
                     pagador,
                     request.getConcepto(),
                     request.getMetodoPago());
@@ -144,7 +153,8 @@ public class DeudaController {
                     liquidacion.getImporte(),
                     liquidacion.getConcepto(),
                     liquidacion.isEstadoConfirmacion(),
-                    liquidacion.getMetodoPago()
+                    liquidacion.getMetodoPago(),
+                    request.getIdsGastos() // devolvemos los gastos que quedaron saldados
             );
 
             return ResponseEntity.ok(response);
@@ -186,7 +196,9 @@ public class DeudaController {
             Map<Integer, DeudaResumenResponse> resumenMap = new LinkedHashMap<>();
             for (RepartoDeuda d : deudas) {
                 Gasto gasto = gastoRepository.findById(d.getId().getIdGasto()).orElse(null);
-                if (gasto == null) continue;
+                if (gasto == null) {
+                    continue;
+                }
                 Integer idPagador = gasto.getPagador().getId();
                 resumenMap.merge(
                         idPagador,

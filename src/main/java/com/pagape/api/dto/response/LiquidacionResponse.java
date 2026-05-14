@@ -1,6 +1,7 @@
 package com.pagape.api.dto.response;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.pagape.api.model.MetodoPago;
 
@@ -21,4 +22,9 @@ public class LiquidacionResponse {
     private String concepto;
     private boolean estadoConfirmacion;
     private MetodoPago metodoPago;
+
+    /**
+     * IDs de los gastos que quedaron saldados con esta liquidación.
+     */
+    private List<Integer> idsGastosPagados;
 }
