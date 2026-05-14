@@ -1,9 +1,7 @@
 package com.pagape.api.controller;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +18,7 @@ import com.pagape.api.dto.request.LiquidacionRequest;
 import com.pagape.api.dto.response.DeudaResumenResponse;
 import com.pagape.api.dto.response.LiquidacionResponse;
 import com.pagape.api.dto.response.RepartoDeudaResponse;
+import com.pagape.api.dto.response.DeudaResumenResponse;
 import com.pagape.api.model.Gasto;
 import com.pagape.api.model.Liquidacion;
 import com.pagape.api.model.RepartoDeuda;
@@ -173,32 +172,10 @@ public class DeudaController {
                         .body("No eres miembro de este grupo.");
             }
 
-            System.out.println("[summary] userId=" + usuarioAutenticado.getId() + " groupId=" + groupId);
+            List<DeudaResumenResponse> resumen = repartoDeudaRepository
+                    .findResumenAgrupadoByDeudorAndGrupo(usuarioAutenticado.getId(), groupId);
 
-            List<RepartoDeuda> deudas = repartoDeudaRepository
-                    .findDeudaPendientesByDeudorAndGrupo(usuarioAutenticado.getId(), groupId);
-
-            System.out.println("[summary] deudas encontradas: " + deudas.size());
-            for (RepartoDeuda d : deudas) {
-                System.out.println("  idGasto=" + d.getId().getIdGasto() + " cuota=" + d.getCuotaDebe() + " pagado=" + d.isPagado());
-            }
-
-            Map<Integer, DeudaResumenResponse> resumenMap = new LinkedHashMap<>();
-            for (RepartoDeuda d : deudas) {
-                Gasto gasto = gastoRepository.findById(d.getId().getIdGasto()).orElse(null);
-                if (gasto == null) continue;
-                Integer idPagador = gasto.getPagador().getId();
-                resumenMap.merge(
-                        idPagador,
-                        new DeudaResumenResponse(idPagador, gasto.getPagador().getNombre(), d.getCuotaDebe()),
-                        (existing, nuevo) -> {
-                            existing.setTotalDebido(existing.getTotalDebido().add(nuevo.getTotalDebido()));
-                            return existing;
-                        });
-            }
-
-            System.out.println("[summary] resumen enviado: " + resumenMap.values());
-            return ResponseEntity.ok(resumenMap.values());
+            return ResponseEntity.ok(resumen);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
