@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.pagape.api.dto.response.DeudaResumenResponse;
 import com.pagape.api.model.RepartoDeuda;
 import com.pagape.api.model.auxiliar_id.RepartoDeudaId;
 
@@ -30,5 +31,11 @@ public interface RepartoDeudaRepository extends JpaRepository<RepartoDeuda, Repa
 
     @Query("SELECT r FROM RepartoDeuda r JOIN Gasto g ON r.id.idGasto = g.id WHERE r.id.idUsuarioDeudor = :userId AND g.planOrigen.grupo.id = :grupoId AND r.pagado = false")
     List<RepartoDeuda> findDeudaPendientesByDeudorAndGrupo(@Param("userId") Integer userId, @Param("grupoId") Integer grupoId);
+
+    @Query("SELECT new com.pagape.api.dto.response.DeudaResumenResponse(g.pagador.id, g.pagador.nombre, SUM(r.cuotaDebe)) " +
+           "FROM RepartoDeuda r JOIN Gasto g ON r.id.idGasto = g.id " +
+           "WHERE r.id.idUsuarioDeudor = :userId AND g.planOrigen.grupo.id = :grupoId AND r.pagado = false " +
+           "GROUP BY g.pagador.id, g.pagador.nombre")
+    List<DeudaResumenResponse> findResumenAgrupadoByDeudorAndGrupo(@Param("userId") Integer userId, @Param("grupoId") Integer grupoId);
 
 }

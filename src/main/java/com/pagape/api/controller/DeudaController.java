@@ -1,8 +1,6 @@
 package com.pagape.api.controller;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,24 +62,20 @@ public class DeudaController {
             @RequestParam Integer pagadorId,
             Authentication authentication) {
         try {
-            // Obtener el email del usuario a partir del token JWT
             String email = authentication.getName();
             Usuario usuarioAutenticado = usuarioService.obtenerPorEmail(email);
 
-            // Si no se encuentra el usuario, no está autorizado
             if (usuarioAutenticado == null) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("Usuario no válido para esta operación.");
             }
 
-            // Verificar que el usuario pertenece al grupo solicitado
             boolean esMiembro = perfilRepository.existeUsuarioEnGrupoPorEmail(email, groupId);
             if (!esMiembro) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("No eres miembro de este grupo.");
             }
 
-            // Buscar todas las deudas donde el usuario autenticado es deudor en ese grupo hacia el pagador especificado
             System.out.println("[my-debts] userId=" + usuarioAutenticado.getId() + " groupId=" + groupId + " pagadorId=" + pagadorId);
 
             List<RepartoDeuda> deudas = repartoDeudaRepository.findByUsuarioDeudorAndGrupoAndPagador(usuarioAutenticado.getId(), groupId, pagadorId);
@@ -154,7 +148,7 @@ public class DeudaController {
                     liquidacion.getConcepto(),
                     liquidacion.isEstadoConfirmacion(),
                     liquidacion.getMetodoPago(),
-                    request.getIdsGastos() // devolvemos los gastos que quedaron saldados
+                    request.getIdsGastos()
             );
 
             return ResponseEntity.ok(response);
@@ -183,34 +177,10 @@ public class DeudaController {
                         .body("No eres miembro de este grupo.");
             }
 
-            System.out.println("[summary] userId=" + usuarioAutenticado.getId() + " groupId=" + groupId);
+            List<DeudaResumenResponse> resumen = repartoDeudaRepository
+                    .findResumenAgrupadoByDeudorAndGrupo(usuarioAutenticado.getId(), groupId);
 
-            List<RepartoDeuda> deudas = repartoDeudaRepository
-                    .findDeudaPendientesByDeudorAndGrupo(usuarioAutenticado.getId(), groupId);
-
-            System.out.println("[summary] deudas encontradas: " + deudas.size());
-            for (RepartoDeuda d : deudas) {
-                System.out.println("  idGasto=" + d.getId().getIdGasto() + " cuota=" + d.getCuotaDebe() + " pagado=" + d.isPagado());
-            }
-
-            Map<Integer, DeudaResumenResponse> resumenMap = new LinkedHashMap<>();
-            for (RepartoDeuda d : deudas) {
-                Gasto gasto = gastoRepository.findById(d.getId().getIdGasto()).orElse(null);
-                if (gasto == null) {
-                    continue;
-                }
-                Integer idPagador = gasto.getPagador().getId();
-                resumenMap.merge(
-                        idPagador,
-                        new DeudaResumenResponse(idPagador, gasto.getPagador().getNombre(), d.getCuotaDebe()),
-                        (existing, nuevo) -> {
-                            existing.setTotalDebido(existing.getTotalDebido().add(nuevo.getTotalDebido()));
-                            return existing;
-                        });
-            }
-
-            System.out.println("[summary] resumen enviado: " + resumenMap.values());
-            return ResponseEntity.ok(resumenMap.values());
+            return ResponseEntity.ok(resumen);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
