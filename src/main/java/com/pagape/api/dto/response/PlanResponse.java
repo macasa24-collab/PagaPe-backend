@@ -31,4 +31,8 @@ public class PlanResponse {
 
     // Votos específicos por usuario
     private List<VotoResponse> votos;
+
+    // Voto del usuario autenticado
+    private Boolean haVotado;
+    private String voto;
 }
