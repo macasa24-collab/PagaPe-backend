@@ -73,7 +73,7 @@ public class PlanService {
         return planRepository.findByGrupoId(idGrupo);
     }
 
-    public List<PlanResponse> listarPlanesConVotos(Integer idGrupo) {
+    public List<PlanResponse> listarPlanesConVotos(Integer idGrupo, Integer idUsuario) {
         List<Plan> planes = planRepository.findByGrupoId(idGrupo);
 
         return planes.stream().map(plan -> {
@@ -90,7 +90,20 @@ public class PlanService {
                     .build())
                     .collect(Collectors.toList());
 
-            // 3. Mapear manualmente a PlanResponse
+            // 3. Calcular voto del usuario autenticado
+            Boolean haVotado = false;
+            String votoUsuario = null;
+            if (idUsuario != null) {
+                java.util.Optional<VotoPlan> miVoto = votosPlan.stream()
+                        .filter(v -> v.getUsuario().getId().equals(idUsuario))
+                        .findFirst();
+                if (miVoto.isPresent()) {
+                    haVotado = true;
+                    votoUsuario = miVoto.get().getVoto();
+                }
+            }
+
+            // 4. Mapear manualmente a PlanResponse
             return PlanResponse.builder()
                     .idPlan(plan.getId())
                     .titulo(plan.getTitulo())
@@ -103,6 +116,8 @@ public class PlanService {
                     .votosAFavor(aFavor)
                     .votosEnContra(enContra)
                     .votos(votos)
+                    .haVotado(haVotado)
+                    .voto(votoUsuario)
                     .build();
         }).collect(Collectors.toList());
     }

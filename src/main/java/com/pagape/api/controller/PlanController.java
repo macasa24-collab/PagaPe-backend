@@ -78,8 +78,14 @@ public class PlanController {
     }
 
     @GetMapping("/group/{idGrupo}")
-    public ResponseEntity<List<PlanResponse>> obtenerPlanesPorGrupo(@PathVariable Integer idGrupo) {
-        List<PlanResponse> resumen = planService.listarPlanesConVotos(idGrupo);
+    public ResponseEntity<List<PlanResponse>> obtenerPlanesPorGrupo(
+            @PathVariable Integer idGrupo,
+            Authentication authentication) {
+        String emailUsuario = authentication != null ? authentication.getName() : null;
+        Usuario usuario = emailUsuario != null ? usuarioService.obtenerPorEmail(emailUsuario) : null;
+        Integer idUsuario = usuario != null ? usuario.getId() : null;
+
+        List<PlanResponse> resumen = planService.listarPlanesConVotos(idGrupo, idUsuario);
 
         if (resumen.isEmpty()) {
             return ResponseEntity.noContent().build();
