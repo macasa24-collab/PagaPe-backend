@@ -102,6 +102,6 @@ public class ChatController {
         // 6. Notificación push a los miembros que no están conectados
         List<String> tokens = perfilRepository
                 .findFcmTokensDeGrupoExceptoEmisor(grupoId, usuario.getId());
-        fcmService.enviarNotificacionChat(tokens, usuario.getNombre(), payload.getTexto(), grupoId);
+        fcmService.enviarNotificacionChat(tokens, usuario.getNombre(), payload.getTexto(), grupoId, usuario.getId());
     }
 }

@@ -16,7 +16,7 @@ public class FcmService {
     private static final Logger log = LoggerFactory.getLogger(FcmService.class);
 
     public void enviarNotificacionChat(List<String> tokens, String nombreEmisor,
-                                       String texto, Integer grupoId) {
+                                       String texto, Integer grupoId, Integer emisorId) {
         if (tokens.isEmpty()) return;
 
         MulticastMessage message = MulticastMessage.builder()
@@ -24,8 +24,9 @@ public class FcmService {
                         .setTitle(nombreEmisor)
                         .setBody(texto.length() > 100 ? texto.substring(0, 97) + "..." : texto)
                         .build())
-                .putData("tipo",    "CHAT")
-                .putData("grupoId", grupoId.toString())
+                .putData("tipo",      "CHAT")
+                .putData("grupoId",   grupoId.toString())
+                .putData("emisorId",  emisorId.toString())
                 .addAllTokens(tokens)
                 .build();
 
